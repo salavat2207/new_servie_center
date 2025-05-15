@@ -2,16 +2,12 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.database import SessionLocal
 from app.models import Feedback as FeedbackModel
-
+from app.schemas import FeedbackCreate
 
 router = APIRouter(prefix='/feedback')
 
-class FeedbackCreate(BaseModel):
-	name: str
-	phone: str
-	message: str
 
-@router.post('/')
+@router.post('/обратная связь')
 def create_feedback(feedback: FeedbackCreate):
 	db = SessionLocal()
 	db_feedback = FeedbackModel(**feedback.dict())
@@ -19,4 +15,4 @@ def create_feedback(feedback: FeedbackCreate):
 	db.commit()
 	db.refresh(db_feedback)
 	db.close()
-	return {"message": "Обратная связь получена"}
+	return {"message": "Заявка успешно создана"}

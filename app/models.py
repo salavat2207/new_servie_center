@@ -2,6 +2,10 @@ from sqlalchemy import Column, Integer, String, ForeignKey,Text, Enum
 from sqlalchemy.orm import relationship
 from app.database import Base
 
+
+"""
+Город сервисного центра
+"""
 class City(Base):
 	__tablename__ = 'cities'
 	id = Column(Integer, primary_key=True)
@@ -16,6 +20,10 @@ class Service(Base):
 	price = Column(Integer)
 	city_id = Column(Integer, ForeignKey('cities.id'))
 
+
+"""
+Заявки на ремонт
+"""
 class RepairRequest(Base):
 	__tablename__ = 'requests'
 	id = Column(Integer, primary_key=True)
@@ -25,6 +33,10 @@ class RepairRequest(Base):
 	city_id = Column(Integer, ForeignKey('cities.id'))
 	status = Column(String, default='Новая заявка')
 
+
+"""
+Мастер
+"""
 class Master(Base):
 	__tablename__ = 'masters'
 	id = Column(Integer, primary_key=True)
@@ -32,6 +44,10 @@ class Master(Base):
 	city_id = Column(Integer, ForeignKey('cities.id'))
 	telegramm_id = Column(Integer)
 
+
+"""
+Обратная связь
+"""
 class Feedback(Base):
 	__tablename__ = 'feedbacks'
 	id = Column(Integer, primary_key=True, index=True)
@@ -40,6 +56,10 @@ class Feedback(Base):
 	message = Column(String, nullable=False)
 
 
+
+"""
+Админ
+"""
 class Admin(Base):
 	__tablename__ = 'admin'
 	id = Column(Integer, primary_key=True, index=True)

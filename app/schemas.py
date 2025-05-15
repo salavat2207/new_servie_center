@@ -1,10 +1,17 @@
 from pydantic import BaseModel
+from datetime import datetime
+from typing import Annotated
+
+from sqlalchemy import Column
+
 
 class RepairRequestCreate(BaseModel):
-	name: str | None
-	phone: str
+	name: str
+	phone: int
 	description: str
 	city_id: int
+
+
 
 class RepairRequestUpdate(BaseModel):
 	status: str
@@ -18,3 +25,29 @@ class AdminCreate(BaseModel):
 	name: str
 	phone: str
 	telegram_id: int
+
+class RepairRequestOut(BaseModel):
+	id: int
+	name: str
+	phone: str
+	description: str
+	city_id: int
+
+class Config:
+	orm_mode = True
+
+class CityCreate(BaseModel):
+    name: str
+
+
+class MasterCreate(BaseModel):
+	name: str
+	phone: str
+	telegram_id: int
+	city_id: int
+
+
+class FeedbackCreate(BaseModel):
+	name: str
+	phone: str
+	message: str

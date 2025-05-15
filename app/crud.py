@@ -1,5 +1,7 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
+from app.models import RepairRequest
+from app.schemas import RepairRequestCreate
 
 
 
@@ -11,9 +13,6 @@ from app import models, schemas
 # 	return new_request
 
 
-
-
-from app.models import RepairRequest
 
 def create_request(db: Session, request_data: schemas.RepairRequestCreate):
     db_request = RepairRequest(**request_data.dict())
@@ -29,3 +28,45 @@ def create_admin(db: Session, admin: schemas.AdminCreate):
     db.commit()
     db.refresh(db_admin)
     return db_admin
+
+
+def get_all_requests(db: Session):
+    return db.query(models.RepairRequest).all()
+
+
+def create_repair_request(db: Session, request: RepairRequestCreate):
+    db_request = RepairRequest(
+        name=request.name,
+        phone=request.phone,
+        description=request.description,
+        city_id=request.city_id
+    )
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+
+def create_city(db: Session, city: schemas.CityCreate):
+    db_city = models.City(name=city.name)
+    db.add(db_city)
+    db.commit()
+    db.refresh(db_city)
+    return db_city
+
+
+def create_master(db: Session, master: schemas.MasterCreate):
+    db_master = models.Master(
+        name=master.name,
+        phone=master.phone,
+        telegram_id=master.telegram_id,
+        city_id=master.city_id
+    )
+    db.add(db_master)
+    db.commit()
+    db.refresh(db_master)
+    return db_master
+
+
+def get_masters_by_city(db: Session, city_id: int):
+    return db.query(models.Master).filter(models.Master.city_id == city_id).all()

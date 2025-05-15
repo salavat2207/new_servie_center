@@ -2,7 +2,7 @@ from app.database import SessionLocal
 from app.models import Master
 import requests
 
-BOT_TOKEN = "6494999568:AAHFXX78-HLOepszO9r8PfxI1EqD2hCA390"
+BOT_TOKEN = "7994046844:AAE8qligOAzPcOVT1bWVbUAXYL8kzgIbKv4"
 CHAT_ID = 908977119
 
 #
@@ -32,9 +32,10 @@ def notify_city_masters(city_id, requests_data):
             f'\nОписание: {requests_data.description}')
 
     for master in masters:
-        chat_id = master.telegram_id or 908977119  # fallback ID
+        chat_id = master.telegram_id or 908977119
         response = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             params={"chat_id": chat_id, "text": text}
         )
-        print(f"[DEBUG] Telegram response {chat_id}: {response.status_code}, {response.text}")
+        print(f"Response for {chat_id}: {response.status_code} {response.text}")
+
