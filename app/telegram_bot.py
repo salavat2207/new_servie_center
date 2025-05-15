@@ -2,8 +2,7 @@ from app.database import SessionLocal
 from app.models import Master
 import requests
 
-BOT_TOKEN = "7994046844:AAE8qligOAzPcOVT1bWVbUAXYL8kzgIbKv4"
-CHAT_ID = 908977119
+#
 
 #
 # def notify_city_masters(city_id, request_data):
