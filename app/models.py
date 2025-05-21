@@ -12,6 +12,7 @@ class City(Base):
 	name = Column(String, unique=True)
 	phone = Column(String)
 	adress = Column(String)
+	masters = relationship("Master", back_populates="city")
 
 class Service(Base):
 	__tablename__ = 'services'
@@ -41,9 +42,10 @@ class Master(Base):
 	__tablename__ = 'masters'
 	id = Column(Integer, primary_key=True)
 	name = Column(String)
-	city_id = Column(Integer, ForeignKey('cities.id'))
-	telegramm_id = Column(Integer)
+	telegram_id = Column(Integer)
+	city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
 
+	city = relationship("City", back_populates="masters")
 
 """
 Обратная связь
@@ -65,4 +67,5 @@ class Admin(Base):
 	id = Column(Integer, primary_key=True, index=True)
 	name = Column(String, nullable=False)
 	phone = Column(String)
-	telegram_id = Column(Integer)
+	# telegram_id = Column(Integer)
+	telegram_id = 908977119

@@ -55,18 +55,31 @@ def create_city(db: Session, city: schemas.CityCreate):
     return db_city
 
 
+# def create_master(db: Session, master: schemas.MasterCreate):
+#     db_master = models.Master(
+#         name=master.name,
+#         phone=master.phone,
+#         telegram_id=master.telegram_id,
+#         city_id=master.city_id
+#     )
+#     db.add(db_master)
+#     db.commit()
+#     db.refresh(db_master)
+#     return db_master
+#
+#
+# def get_masters_by_city(db: Session, city_id: int):
+#     return db.query(models.Master).filter(models.Master.city_id == city_id).all()
+
 def create_master(db: Session, master: schemas.MasterCreate):
-    db_master = models.Master(
-        name=master.name,
-        phone=master.phone,
-        telegram_id=master.telegram_id,
-        city_id=master.city_id
-    )
+    db_master = models.Master(**master.dict())
     db.add(db_master)
     db.commit()
     db.refresh(db_master)
     return db_master
 
-
 def get_masters_by_city(db: Session, city_id: int):
     return db.query(models.Master).filter(models.Master.city_id == city_id).all()
+
+
+

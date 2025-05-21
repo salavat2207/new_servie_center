@@ -1,9 +1,13 @@
 from app.database import SessionLocal
 from app.models import Master
 import requests
+from dotenv import load_dotenv
+import os
 
-#
+load_dotenv()
 
+
+BOT_TOKEN = os.getenv('BOT_TOKEN')
 #
 # def notify_city_masters(city_id, request_data):
 #     db = SessionLocal()
@@ -31,7 +35,7 @@ def notify_city_masters(city_id, requests_data):
             f'\nОписание: {requests_data.description}')
 
     for master in masters:
-        chat_id = master.telegram_id or 908977119
+        chat_id = master.telegram_id
         response = requests.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             params={"chat_id": chat_id, "text": text}

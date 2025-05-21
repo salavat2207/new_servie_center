@@ -6,10 +6,11 @@ from sqlalchemy import Column
 
 
 class RepairRequestCreate(BaseModel):
-	name: str
-	phone: int
-	description: str
-	city_id: int
+		name: str
+		phone: int
+		description: str
+		city_id: int
+
 
 
 
@@ -51,3 +52,18 @@ class FeedbackCreate(BaseModel):
 	name: str
 	phone: str
 	message: str
+
+
+class MasterCreate(BaseModel):
+	name: str
+	telegram_id: int
+	city_id: int
+
+class MasterOut(BaseModel):
+	id: int
+	name: str
+	telegram_id: int
+	city_id: int
+
+	class Config:
+		orm_mode = True

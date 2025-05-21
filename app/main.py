@@ -23,7 +23,7 @@ app.add_middleware(
 app.include_router(cities.router)
 app.include_router(requests.router)
 app.include_router(feedback.router)
-# app.include_router(masters.router)
+app.include_router(masters.router)
 app.include_router(admin.router)
 
 
