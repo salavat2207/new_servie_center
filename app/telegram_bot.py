@@ -1,5 +1,5 @@
 from app.database import SessionLocal
-from app.models import Master
+from app.models import Master, RepairRequest
 import requests
 from dotenv import load_dotenv
 import os
@@ -24,15 +24,17 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 
 def notify_city_masters(city_id, requests_data):
     print(f"[DEBUG] Отправка уведомлений по городу ID: {city_id}")
-    print(f"[DEBUG] Заявка: {requests_data.name}, {requests_data.phone}, {requests_data.description}")
+    print(f"[DEBUG] Заявка: {requests_data.phone}, {requests_data.description}")
 
     db = SessionLocal()
     masters = db.query(Master).filter(Master.city_id == city_id).all()
     print(f"[DEBUG] Найдено мастеров: {len(masters)}")
 
-    text = (f'Новая заявка:\nИмя: {requests_data.name}'
-            f'\nТелефон: {requests_data.phone}'
-            f'\nОписание: {requests_data.description}')
+    text = (
+        f'🛠 Заявка на консультацию:'
+        # f'\nИмя: {requests_data.name}'
+            f'\n📱 Телефон: {requests_data.phone}'
+            f'\n📱 Модель / Неисправность: {requests_data.description}')
 
     for master in masters:
         chat_id = master.telegram_id
@@ -42,3 +44,26 @@ def notify_city_masters(city_id, requests_data):
         )
         print(f"Response for {chat_id}: {response.status_code} {response.text}")
 
+
+#
+# def notify_city_masters(city_id, requests_data):
+#     print(f"[DEBUG] Отправка уведомлений по городу ID: {city_id}")
+#     print(f"[DEBUG] Заявка: {requests_data.phone}, {requests_data.description}")
+#
+#     db = SessionLocal()
+#     masters = db.query(Master).filter(Master.city_id == city_id).all()
+#     print(f"[DEBUG] Найдено мастеров: {len(masters)}")
+#
+#     text = (
+#         f'🔧 Новая заявка:\n'
+#         f'📱 Телефон: {requests_data.phone}\n'
+#         f'📝 Описание: {requests_data.description}'
+#     )
+#
+#     for master in masters:
+#         chat_id = master.telegram_id
+#         response = requests.get(
+#             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+#             params={"chat_id": chat_id, "text": text}
+#         )
+#         print(f"Response for {chat_id}: {response.status_code} {response.text}")

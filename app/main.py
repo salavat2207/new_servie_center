@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from app.routers import cities, requests, feedback, masters, admin
+from app.routers import cities, requests, feedback, masters, admin, auth, products
 from app.database import create_db_and_tables
 
 
@@ -25,6 +25,10 @@ app.include_router(requests.router)
 app.include_router(feedback.router)
 app.include_router(masters.router)
 app.include_router(admin.router)
+app.include_router(products.router)
+
+
+
 
 
 

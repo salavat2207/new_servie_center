@@ -16,3 +16,4 @@ def create_feedback(feedback: FeedbackCreate):
 	db.refresh(db_feedback)
 	db.close()
 	return {"message": "Заявка успешно создана"}
+
