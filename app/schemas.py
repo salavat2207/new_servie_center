@@ -36,7 +36,8 @@ class ServiceCreate(BaseModel):
 
 
 class AdminCreate(BaseModel):
-	name: str
+	username: str
+	password: str
 	phone: str
 	telegram_id: int
 
@@ -51,6 +52,8 @@ class RepairRequestOut(BaseModel):
 
 class Config:
 	orm_mode = True
+
+
 # orm_mode = ConfigDict(from_attributes=True)
 
 
@@ -95,6 +98,8 @@ class ApplicationBase(BaseModel):
 	phone: str
 	description: Optional[str] = None
 	city_id: int
+
+
 # code: str
 
 
@@ -167,7 +172,29 @@ class ProductPriceCreate(BaseModel):
 
 
 
+
 class ProductPriceSchema(BaseModel):
-    product_id: str
-    city_id: int
-    price: int
+	product_id: str
+	city_id: int
+	price: int
+
+
+class ProductCreateSchema(BaseModel):
+	id: str
+	title: str
+	link: str
+	category_id: int
+	description: str
+	image: str
+	prices: List[ProductPriceSchema]
+
+
+
+class AdminLoginSchema(BaseModel):
+	username: str
+	password: str
+
+
+class TokenSchema(BaseModel):
+	access_token: str
+	token_type: str

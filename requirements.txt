@@ -6,3 +6,5 @@ alembic
 aiohttp
 python-telegram-bot
 python-jose
+passlib
+bcrypt
