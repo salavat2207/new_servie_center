@@ -38,8 +38,6 @@ class ServiceCreate(BaseModel):
 class AdminCreate(BaseModel):
 	username: str
 	password: str
-	phone: str
-	telegram_id: int
 
 
 class RepairRequestOut(BaseModel):

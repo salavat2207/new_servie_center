@@ -23,7 +23,7 @@ router = APIRouter()
 # def get_product(product: schemas.ProductsCreate, db: Session = Depends(get_db)):
 # 	db_product = models.Produts(**product.dict())
 # 	db.add(db_product)
-# 	db.commit()
+# 	db.commit()`
 # 	db.refresh(db_product)
 # 	return db_product
 

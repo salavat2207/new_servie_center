@@ -1,13 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
 from app import schemas, crud
 from app.database import get_db
-from app.models import Product, ProductPrice, User
+from app.models import Product, ProductPrice, User, Admin
 from app.routers.auth import get_current_user
 from app.schemas import ProductCreate, ProductPriceCreate, ProductPriceSchema, AdminLoginSchema, ProductCreateSchema
 from app.auth import verify_password, create_access_token, get_current_admin, get_password_hash, get_current_admin_user
+from app.database import SessionLocal, Base, engine
+from app.models import User
+from app.auth import get_password_hash
 
 #
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -83,28 +86,68 @@ def set_product_price(data: ProductPriceSchema, db: Session = Depends(get_db)):
 """
 
 
-@router.post("/admin/create")
-def create_admin(user: schemas.AdminCreate, db: Session = Depends(get_db)):
-	hashed_password = get_password_hash(user.password)
-	new_user = User(username=user.username, password=hashed_password, is_superadmin=True)
-	db.add(new_user)
-	db.commit()
-	return {"message": "Admin created"}
+#
+# # # Старая версия
+# @router.post("/admin/create")
+# def create_admin(user: schemas.AdminCreate, db: Session = Depends(get_db)):
+# 	hashed_password = get_password_hash(user.password)
+# 	new_user = User(username=user.username, password=hashed_password, is_superadmin=True)
+# 	db.add(new_user)
+# 	db.commit()
+# 	return {"message": "Admin created"}
 
+
+# Новая версия
+@router.post("/admin/create")
+def create_admin():
+	# Создаём таблицы, если их ещё нет
+	Base.metadata.create_all(bind=engine)
+
+	db = SessionLocal()
+	username = input("Введите имя суперадмина: ").strip()
+	password = input("Введите пароль суперадмина: ").strip()
+
+	existing_user = db.query(User).filter_by(username=username).first()
+	if existing_user:
+		print("❌ Пользователь с таким именем уже существует.")
+		return
+
+	hashed_password = get_password_hash(password)
+	admin = Admin(username=username, password=hashed_password, is_superadmin=True)
+	db.add(admin)
+	db.commit()
+	print("✅ Суперадмин успешно создан.")
+
+
+if __name__ == "__main__":
+	create_admin()
 
 """
-Создаем энпоинт admin/login:
+Создаем авторизацию admin/login:
 """
 
 
 @router.post("/admin/login")
-def login_admin(data: schemas.AdminLoginSchema, db: Session = Depends(get_db)):
-	admin = db.query(User).filter_by(username=data.username, is_superadmin=True).first()
-	if not admin or not verify_password(data.password, admin.password):
+def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+	admin = db.query(Admin).filter_by(username=form_data.username, is_superadmin=True).first()
+	if not admin or not verify_password(form_data.password, admin.password):
 		raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 
 	token = create_access_token({"sub": admin.username})
 	return {"access_token": token, "token_type": "bearer"}
+
+
+# """
+# # Новый вариант авторизации
+# # """
+# @router.post("/admin/login")
+# def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+# 	admin = db.query(User).filter_by(username=form_data.username, is_superadmin=True).first()
+# 	if not admin or not verify_password(form_data.password, admin.password):
+# 		raise HTTPException(status_code=401, detail="Неверный логин или пароль")
+#
+# 	token = create_access_token({"sub": admin.username})
+# 	return {"access_token": token, "token_type": "bearer"}
 
 
 """

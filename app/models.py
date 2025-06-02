@@ -79,13 +79,23 @@ class Feedback(Base):
 """
 Админ
 """
+# class Admin(Base):
+# 	__tablename__ = 'admin'
+# 	id = Column(Integer, primary_key=True, index=True)
+# 	name = Column(String, nullable=False)
+# 	phone = Column(String)
+# 	# telegram_id = Column(Integer)
+# 	telegram_id = 908977119
+
+
+
+
 class Admin(Base):
 	__tablename__ = 'admin'
 	id = Column(Integer, primary_key=True, index=True)
-	name = Column(String, nullable=False)
-	phone = Column(String)
-	# telegram_id = Column(Integer)
-	telegram_id = 908977119
+	username = Column(String, unique=True, index=True)
+	password = Column(String(128), nullable=False)
+	is_superadmin = Column(Boolean, default=True)
 
 
 
@@ -119,9 +129,10 @@ class Application(Base):
 	city_id = Column(Integer, ForeignKey("cities.id"))
 	city = relationship("City")
 	name = Column(String, nullable=False)
-	# assigned_master_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-	# assigned_master = relationship("User", foreign_keys=[assigned_master_id])
-
+	assigned_master_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+	status = Column(String, default='Новая заявка')
+	assigned_master = relationship("User", foreign_keys=[assigned_master_id])
+	#
 	code = Column(String, unique=True, index=True)
 
 	city = relationship("City")
