@@ -170,8 +170,8 @@ class ProductPrice(Base):
 
 class RepairService(Base):
 	__tablename__ = "repair_services"
-	id = Column(String,primary_key=True, nullable=True)
-	city = Column(String)
+	id = Column(Integer,primary_key=True, nullable=True)
+	service_id = Column(String)
 	name = Column(String, nullable=False)
 	description = Column(String, nullable=False)
 	duration = Column(String, nullable=False)
