@@ -170,13 +170,14 @@ class ProductPrice(Base):
 
 class RepairService(Base):
 	__tablename__ = "repair_services"
-	city = Column(String, primary_key=True)
+	id = Column(String,primary_key=True, nullable=True)
+	city = Column(String)
 	name = Column(String, nullable=False)
 	description = Column(String, nullable=False)
 	duration = Column(String, nullable=False)
 	price = Column(Integer, nullable=False)
-	category_id = Column(Integer, ForeignKey("categories.id"))
-	product_id = Column(Integer, ForeignKey("products.id"))
+	category_id = Column(String, ForeignKey("categories.id"))
+	product_id = Column(String, ForeignKey("products.id"))
 
 	product = relationship("Product", back_populates="repair_services")
 

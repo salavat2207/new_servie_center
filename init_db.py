@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_password_hash
 from app.database import SessionLocal, Base, engine
-from app.models import Product, City, ProductPrice, Admin
+from app.models import Product, City, ProductPrice, Admin, RepairService
 
 Base.metadata.create_all(bind=engine)
 
@@ -20,7 +20,18 @@ admin = [
 ]
 
 
-
+# repair_services = [
+#     RepairService(id=1, name="Замена стекла", price=5000, city_id=1),
+#     RepairService(id=2, name="Замена аккумулятора", price=3000, city_id=1),
+#     RepairService(id=3, name="Замена динамика", price=2000, city_id=1),
+#     RepairService(id=4, name="Замена корпуса", price=4000, city_id=1),
+#     RepairService(id=5, name="Замена экрана", price=6000, city_id=1),
+#     RepairService(id=6, name="Замена камеры", price=7000, city_id=1),
+#     RepairService(id=7, name="Замена микрофона", price=2500, city_id=1),
+#     RepairService(id=8, name="Замена кнопки включения", price=1500, city_id=1),
+#
+#
+# ]
 
 db.add_all(cities)
 db.add_all(admin)

@@ -3,11 +3,21 @@ from app.database import SessionLocal
 from sqlalchemy.orm import Session
 from app import crud, schemas, telegram_bot, models
 from typing import List
-from app.models import Application, City, Master, RepairRequest
-from app.schemas import ApplicationCreate, ApplicationOut, RepairRequestBase
+from app.models import Application, City, Master, RepairRequest, Product, RepairService
+from app.schemas import ApplicationCreate, ApplicationOut, RepairRequestBase, RepairRequestTelegram
 from app.telegram_bot import notify_city_masters
+import httpx
+import os
+
+router = APIRouter()
 
 router = APIRouter(prefix='/requests')
+
+
+
+BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
 
 def get_db():
 	db = SessionLocal()
@@ -277,3 +287,42 @@ def submit_request(
 	telegram_bot.notify_city_masters(new_request.city_id, new_request)
 	return {'Ваша заявка принята, ожидайте звонка от мастера'}
 
+
+
+
+
+def send_telegram_message(message: str):
+	url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+	payload = {
+		"chat_id": TELEGRAM_CHAT_ID,
+		"text": message,
+		"parse_mode": "HTML"
+	}
+	try:
+		response = httpx.post(url, json=payload)
+		response.raise_for_status()
+	except httpx.RequestError as e:
+		print("Ошибка отправки в Telegram:", e)
+
+
+@router.post("/requests/repair")
+def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+	product = db.query(Product).filter(Product.id == request.product_id).first()
+	service = db.query(RepairService).filter(RepairService.id == request.service_id).first()
+
+	if not product or not service:
+		raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
+
+	message = (
+		f"🛠 <b>Заявка на ремонт</b>\n"
+		f"📱 <b>Модель:</b> {product.name}\n"
+		f"🔧 <b>Услуга:</b> {service.name}\n"
+		f"📝 <b>Описание:</b> {service.description}\n"
+		f"💰 <b>Стоимость:</b> {int(service.price)} ₽\n"
+		f"🙍‍♂️ <b>Имя / Неисправность:</b> {request.name}\n"
+		f"📞 <b>Телефон:</b> {request.phone}"
+	)
+
+	send_telegram_message(message)
+
+	return {"message": "Заявка успешно отправлена"}

@@ -129,6 +129,14 @@ class RepairServiceBase(BaseModel):
 	category_id: str
 
 
+class RepairRequestTelegram(BaseModel):
+	product_id: str
+	service_id: str
+	name: str
+	phone: str
+	city_id: int
+
+
 class RepairServiceCreate(RepairServiceBase):
 	product_id: str
 
@@ -169,8 +177,6 @@ class ProductPriceCreate(BaseModel):
 	price: int
 
 
-
-
 class ProductPriceSchema(BaseModel):
 	product_id: str
 	city_id: int
@@ -185,7 +191,6 @@ class ProductCreateSchema(BaseModel):
 	description: str
 	image: str
 	prices: List[ProductPriceSchema]
-
 
 
 class AdminLoginSchema(BaseModel):
