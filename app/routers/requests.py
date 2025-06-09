@@ -308,8 +308,16 @@ def send_telegram_message(message: str):
 @router.post("/requests/repair")
 def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
 	product = db.query(Product).filter(Product.id == request.product_id).first()
-	service = db.query(RepairService).filter(RepairService.id == request.service_id).first()
-
+	# service = db.query(RepairService).filter(RepairService.id == request.service_id).first()
+	service = (
+		db.query(RepairService)
+		.filter(
+			RepairService.service_id == request.service_id,
+			RepairService.product_id == request.product_id,
+			RepairService.city_id == request.city_id,  # опционально, если важно
+		)
+		.first()
+	)
 	if not product or not service:
 		raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
 

@@ -31,6 +31,22 @@ class RepairRequest(Base):
 
 	city = relationship("City", back_populates="requests")
 
+
+class RepairService(Base):
+	__tablename__ = "repair_services"
+	id = Column(Integer,primary_key=True, autoincrement=True)
+	city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
+	service_id = Column(String)
+	name = Column(String, nullable=False)
+	description = Column(String, nullable=False)
+	duration = Column(String, nullable=False)
+	price = Column(Integer, nullable=False)
+	category_id = Column(String, ForeignKey("categories.id"))
+	product_id = Column(String, ForeignKey("products.id"))
+
+	product = relationship("Product", back_populates="repair_services")
+
+
 class Service(Base):
 	__tablename__ = 'services'
 	id = Column(Integer, primary_key=True)
@@ -168,18 +184,7 @@ class ProductPrice(Base):
 	city = relationship("City")
 
 
-class RepairService(Base):
-	__tablename__ = "repair_services"
-	id = Column(Integer,primary_key=True, nullable=True)
-	service_id = Column(String)
-	name = Column(String, nullable=False)
-	description = Column(String, nullable=False)
-	duration = Column(String, nullable=False)
-	price = Column(Integer, nullable=False)
-	category_id = Column(String, ForeignKey("categories.id"))
-	product_id = Column(String, ForeignKey("products.id"))
 
-	product = relationship("Product", back_populates="repair_services")
 
 
 
