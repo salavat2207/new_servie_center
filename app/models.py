@@ -38,13 +38,13 @@ class RepairService(Base):
 	city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
 	service_id = Column(String)
 	name = Column(String, nullable=False)
-	description = Column(String, nullable=False)
+	description = Column(String, nullable=True)
 	duration = Column(String, nullable=False)
 	price = Column(Integer, nullable=False)
 	category_id = Column(String, ForeignKey("categories.id"))
-	product_id = Column(String, ForeignKey("products.id"))
+	product_id = Column(String, ForeignKey("products.id"))  # ← Вот это поле обязательно должно быть
 
-	product = relationship("Product", back_populates="repair_services")
+	product = relationship("Product", back_populates="repair_services", foreign_keys=[product_id])
 
 
 class Service(Base):
@@ -163,6 +163,8 @@ class Product(Base):
 	category_id = Column(Integer, ForeignKey("categories.id"))
 	description = Column(String, nullable=True)
 	image = Column(String)
+	city_id = Column(Integer, ForeignKey("cities.id"))
+	# service_id = Column(Integer, ForeignKey("repair_services.id"))
 
 	repair_services = relationship("RepairService", back_populates="product")
 	prices = relationship("ProductPrice", back_populates="product")

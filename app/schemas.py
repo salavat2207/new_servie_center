@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, validator
 from datetime import datetime
 from typing import Optional, Annotated, List
 
@@ -118,6 +118,8 @@ class ProductsCreate(BaseModel):
 	name: str
 	category_id: str
 	description: str
+	price: int
+	city_id: int
 
 
 class RepairServiceBase(BaseModel):
@@ -164,23 +166,46 @@ class ProductRead(ProductBase):
 
 class ProductCreate(BaseModel):
 	id: str
+	name: str
 	title: str
 	link: Optional[str]
-	category_id: Optional[str]
+	category_id: str
 	description: Optional[str]
 	image: Optional[str]
 
 
 class ProductPriceCreate(BaseModel):
-	product_id: str
-	city: str
+	id: int
+	name: str
+	city_id: int
 	price: int
+	description: str
+	duration: str
 
 
 class ProductPriceSchema(BaseModel):
 	product_id: str
 	city_id: int
 	price: int
+
+
+class ProductPriceOut(BaseModel):
+	id: int
+	name: str
+	price: int
+	city_id: int
+	description: str
+	duration: str
+
+	@validator("city_id", pre=True)
+	def parse_city_id(cls, v):
+		try:
+			return int(v)
+		except (TypeError, ValueError):
+			raise ValueError(f"Invalid city_id value: {v}")
+
+	class Config:
+		orm_mode = True
 
 
 class ProductCreateSchema(BaseModel):

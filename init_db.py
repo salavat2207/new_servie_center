@@ -1,12 +1,17 @@
-from sqlalchemy.orm import Session
+import os
 
+from sqlalchemy.orm import Session
 from app.auth import get_password_hash
 from app.database import SessionLocal, Base, engine
-from app.models import Product, City, ProductPrice, Admin, RepairService
+from app.models import Product, City, ProductPrice, Admin, RepairService, User, Master
+
 
 Base.metadata.create_all(bind=engine)
 
 db: Session = SessionLocal()
+
+
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 cities = [
     City(id=1, name="Челябинск", phone="+79049351111", adress="Свердловский проспект, 80", code="CHE"),
@@ -20,21 +25,56 @@ admin = [
 ]
 
 
-# repair_services = [
-#     RepairService(id=1, name="Замена стекла", price=5000, city_id=1),
-#     RepairService(id=2, name="Замена аккумулятора", price=3000, city_id=1),
-#     RepairService(id=3, name="Замена динамика", price=2000, city_id=1),
-#     RepairService(id=4, name="Замена корпуса", price=4000, city_id=1),
-#     RepairService(id=5, name="Замена экрана", price=6000, city_id=1),
-#     RepairService(id=6, name="Замена камеры", price=7000, city_id=1),
-#     RepairService(id=7, name="Замена микрофона", price=2500, city_id=1),
-#     RepairService(id=8, name="Замена кнопки включения", price=1500, city_id=1),
-#
-#
-# ]
+repair_services = [
+    RepairService(id=1,
+                  city_id=1,
+                  service_id="iphone-16-pro-screen-repair",
+                  name="Замена дисплея",
+                  description="Замена дисплея",
+                  duration="1-2 часа",
+                  price=8490,
+                  category_id="apple iphone",
+                  product_id="iphone-16-pro",
+
+    ),
+    RepairService(id=2,
+                  city_id=1,
+                  service_id="iphone-16-pro- battery-replacement",
+                  name="Замена аккумулятора",
+                  description="Замена аккумулятора",
+                  duration="30-60 минут",
+                  price=4990,
+                  category_id="apple iphone",
+                  product_id="iphone-16-pro",
+                  ),
+]
+
+
+
+masters = [
+    Master(id=1,
+         name='Тест',
+         telegram_id='908977119',
+         city_id=1
+           )
+]
+
+
+
+
+
+products = [
+    Product(id="iphone-16-pro", title="Apple iPhone 16 Pro", description='Ремонт iPhone 16 Pro')
+]
+
+
+
 
 db.add_all(cities)
 db.add_all(admin)
+db.add_all(repair_services)
+db.add_all(masters)
+db.add_all(products)
 db.commit()
 db.close()
 

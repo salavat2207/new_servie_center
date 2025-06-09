@@ -27,6 +27,7 @@ app.include_router(masters.router)
 app.include_router(admin.router)
 app.include_router(products.router)
 app.include_router(requests.router, prefix="/api", tags=["Requests"])
+app.include_router(products.router, prefix="/products", tags=["products"])
 
 
 
