@@ -15,7 +15,7 @@ router = APIRouter(prefix='/requests')
 
 
 
-BOT_TOKEN = os.getenv("TELEGRAM_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 
@@ -323,7 +323,7 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
 
 	message = (
 		f"🛠 <b>Заявка на ремонт</b>\n"
-		f"📱 <b>Модель:</b> {product.name}\n"
+		f"📱 <b>Модель:</b> {product.title}\n"
 		f"🔧 <b>Услуга:</b> {service.name}\n"
 		f"📝 <b>Описание:</b> {service.description}\n"
 		f"💰 <b>Стоимость:</b> {int(service.price)} ₽\n"
