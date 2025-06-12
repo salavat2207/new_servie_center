@@ -1,8 +1,7 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
-from app.models import RepairRequest
-from app.schemas import RepairRequestCreate
-
+from app.models import RepairRequest, RepairService
+from app.schemas import RepairRequestCreate, RepairRequestTelegram
 
 
 # def create_request(db: Session, request: schemas.RepairRequestCreate):
@@ -33,7 +32,9 @@ def create_admin(db: Session, admin: schemas.AdminCreate):
 def get_all_requests(db: Session):
     return db.query(models.RepairRequest).all()
 
-
+"""
+Общая форма заявок с сайта
+"""
 def create_repair_request(db: Session, request: RepairRequestCreate):
     db_request = RepairRequest(
         name=request.name,
@@ -45,6 +46,31 @@ def create_repair_request(db: Session, request: RepairRequestCreate):
     db.commit()
     db.refresh(db_request)
     return db_request
+
+
+
+
+"""
+Форма заявок с карточки товара
+"""
+def send_repair_request(db: Session, request: RepairRequestTelegram):
+    db_request = RepairService(
+        name=request.name,
+        phone=request.phone,
+        description=request.description,
+        city_id=request.city_id,
+        service_id=request.service_id,
+        duration=request.duration,
+        price=request.price,
+        category_id=request.category_id,
+        product_id=request.product_id
+    )
+    db.add(db_request)
+    db.commit()
+    db.refresh(db_request)
+    return db_request
+
+
 
 
 def create_city(db: Session, city: schemas.CityCreate):

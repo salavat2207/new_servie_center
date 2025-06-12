@@ -12,6 +12,25 @@ class RepairRequestCreate(BaseModel):
 	city_id: int
 
 
+
+class RepairRequestTelegram(BaseModel):
+	id: str
+	city_id: int
+	service_id: int
+	name: str
+	description: str
+	duration: str
+	price: int
+	category_id: str
+	product_id: str
+
+
+
+
+
+
+
+
 class RepairRequestBase(BaseModel):
 	name: str
 	# phone: str
@@ -21,7 +40,7 @@ class RepairRequestBase(BaseModel):
 	# created_at: datetime
 
 	model_config = {
-		"from_attributes": True  # В pydantic v2 вместо orm_mode
+		"from_attributes": True
 	}
 
 
@@ -87,8 +106,9 @@ class MasterOut(BaseModel):
 	telegram_id: int
 	city_id: int
 
-	class Config:
-		from_attributes = True
+	model_config = {
+		"from_attributes": True
+	}
 
 
 class ApplicationBase(BaseModel):
@@ -109,8 +129,9 @@ class ApplicationOut(ApplicationBase):
 	id: int
 	code: str
 
-	class Config:
-		from_attributes = True
+	model_config = {
+		"from_attributes": True
+	}
 
 
 class ProductsCreate(BaseModel):
@@ -137,6 +158,11 @@ class RepairRequestTelegram(BaseModel):
 	name: str
 	phone: str
 	city_id: int
+	description: str
+	duration: str
+	price: int
+	category_id: str
+
 
 
 class RepairServiceCreate(RepairServiceBase):
@@ -204,8 +230,9 @@ class ProductPriceOut(BaseModel):
 		except (TypeError, ValueError):
 			raise ValueError(f"Invalid city_id value: {v}")
 
-	class Config:
-		orm_mode = True
+	model_config = {
+		"from_attributes": True
+	}
 
 
 class ProductCreateSchema(BaseModel):

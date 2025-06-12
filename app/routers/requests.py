@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends, HTTPException
 from app.database import SessionLocal
 from sqlalchemy.orm import Session
@@ -291,6 +293,7 @@ def submit_request(
 
 
 
+
 def send_telegram_message(message: str):
 	url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 	payload = {
@@ -320,6 +323,18 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
 	)
 	if not product or not service:
 		raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
+
+	new_application = Application(
+		phone=request.phone,
+		description=request.description,
+		city_id=request.city_id,
+		name=request.name,
+		code=str(uuid4())[:8],
+		status="Новая заявка"
+	)
+	db.add(new_application)
+	db.commit()
+	db.refresh(new_application)
 
 	message = (
 		f"🛠 <b>Заявка на ремонт</b>\n"
