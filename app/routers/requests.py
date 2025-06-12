@@ -1,3 +1,4 @@
+import threading
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,6 +11,7 @@ from app.schemas import ApplicationCreate, ApplicationOut, RepairRequestBase, Re
 from app.telegram_bot import notify_city_masters
 import httpx
 import os
+import asyncio
 
 router = APIRouter()
 
@@ -19,6 +21,8 @@ router = APIRouter(prefix='/requests')
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+city_cache = {}
 
 
 def get_db():
@@ -278,23 +282,24 @@ def get_db():
 # 	return application
 
 
-"""
-ИТОГОВАЯ Форма обратной связи с сохранением в бд
-"""
-@router.post('/Заявка на консультацию:')
-def submit_request(
-		request: schemas.RepairRequestCreate, db: Session = Depends(get_db)
-):
-	new_request = crud.create_request(db, request)
-	telegram_bot.notify_city_masters(new_request.city_id, new_request)
-	return {'Ваша заявка принята, ожидайте звонка от мастера'}
+# """
+# ИТОГОВАЯ Форма обратной связи с сохранением в бд
+# """
+# @router.post('/Заявка на консультацию:')
+# def submit_request(
+# 		request: schemas.RepairRequestCreate, db: Session = Depends(get_db)
+# ):
+# 	new_request = crud.create_request(db, request)
+# 	telegram_bot.notify_city_masters(new_request.city_id, new_request)
+# 	return {'Ваша заявка принята, ожидайте звонка от мастера'}
 
 
 
 
 
 
-def send_telegram_message(message: str):
+
+async def send_telegram_message_async(message: str):
 	url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 	payload = {
 		"chat_id": TELEGRAM_CHAT_ID,
@@ -302,22 +307,80 @@ def send_telegram_message(message: str):
 		"parse_mode": "HTML"
 	}
 	try:
-		response = httpx.post(url, json=payload)
-		response.raise_for_status()
+		async with httpx.AsyncClient() as client:
+			await client.post(url, json=payload)
 	except httpx.RequestError as e:
 		print("Ошибка отправки в Telegram:", e)
 
 
+
+
+@router.post('/Заявка на консультацию:')
+async def submit_request(request: schemas.RepairRequestCreate, db: Session = Depends(get_db)):
+	new_request = crud.create_request(db, request)
+	threading.Thread(target=notify_city_masters, args=(new_request.city_id, new_request)).start()
+	return {'Ваша заявка принята, ожидайте звонка от мастера'}
+
+
+# @router.post("/requests/repair")
+# def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+# 	product = db.query(Product).filter(Product.id == request.product_id).first()
+# 	# service = db.query(RepairService).filter(RepairService.id == request.service_id).first()
+# 	service = (
+# 		db.query(RepairService)
+# 		.filter(
+# 			RepairService.service_id == request.service_id,
+# 			RepairService.product_id == request.product_id,
+# 			RepairService.city_id == request.city_id,  # опционально, если важно
+# 		)
+# 		.first()
+# 	)
+# 	if not product or not service:
+# 		raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
+#
+# 	new_application = Application(
+# 		phone=request.phone,
+# 		description=request.description,
+# 		city_id=request.city_id,
+# 		name=request.name,
+# 		code=str(uuid4())[:8],
+# 		status="Новая заявка"
+# 	)
+# 	db.add(new_application)
+# 	db.commit()
+# 	db.refresh(new_application)
+#
+# 	message = (
+# 		f"🛠 <b>Заявка на ремонт</b>\n"
+# 		f"📱 <b>Модель:</b> {product.title}\n"
+# 		f"🔧 <b>Услуга:</b> {service.name}\n"
+# 		f"📝 <b>Описание:</b> {service.description}\n"
+# 		f"💰 <b>Стоимость:</b> {int(service.price)} ₽\n"
+# 		f"🙍‍♂️ <b>Имя / Неисправность:</b> {request.name}\n"
+# 		f"📞 <b>Телефон:</b> {request.phone}"
+# 	)
+#
+# 	send_telegram_message(message)
+#
+# 	return {"message": "Заявка успешно отправлена"}
+
+
 @router.post("/requests/repair")
 def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+	# Кешируем город
+	if request.city_id not in city_cache:
+		city = db.query(City).filter(City.id == request.city_id).first()
+		if city:
+			city_cache[request.city_id] = city
+		else:
+			raise HTTPException(status_code=404, detail="Город не найден")
+
 	product = db.query(Product).filter(Product.id == request.product_id).first()
-	# service = db.query(RepairService).filter(RepairService.id == request.service_id).first()
 	service = (
 		db.query(RepairService)
 		.filter(
-			RepairService.service_id == request.service_id,
 			RepairService.product_id == request.product_id,
-			RepairService.city_id == request.city_id,  # опционально, если важно
+			RepairService.id == request.service_id
 		)
 		.first()
 	)
@@ -338,7 +401,7 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
 
 	message = (
 		f"🛠 <b>Заявка на ремонт</b>\n"
-		f"📱 <b>Модель:</b> {product.title}\n"
+		f"📱 <b>Модель:</b> {product.name}\n"
 		f"🔧 <b>Услуга:</b> {service.name}\n"
 		f"📝 <b>Описание:</b> {service.description}\n"
 		f"💰 <b>Стоимость:</b> {int(service.price)} ₽\n"
@@ -346,6 +409,6 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
 		f"📞 <b>Телефон:</b> {request.phone}"
 	)
 
-	send_telegram_message(message)
+	asyncio.create_task(send_telegram_message_async(message))
 
 	return {"message": "Заявка успешно отправлена"}
