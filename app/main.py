@@ -41,6 +41,11 @@ def startup_event():
     create_db_and_tables()
 
 
+
+
+"""
+Авторизация
+"""
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(form_data.username, form_data.password)
