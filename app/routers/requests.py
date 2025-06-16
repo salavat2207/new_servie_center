@@ -292,7 +292,7 @@ def get_db():
 # 	new_request = crud.create_request(db, request)
 # 	telegram_bot.notify_city_masters(new_request.city_id, new_request)
 # 	return {'Ваша заявка принята, ожидайте звонка от мастера'}
-
+#
 
 
 
@@ -314,6 +314,9 @@ async def send_telegram_message_async(message: str):
 
 
 
+"""
+Итоговый рабочий вариант
+"""
 
 @router.post('/Заявка на консультацию:')
 async def submit_request(request: schemas.RepairRequestCreate, db: Session = Depends(get_db)):
