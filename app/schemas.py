@@ -33,6 +33,17 @@ class RepairRequestTelegram(BaseModel):
 	duration: str
 	price: int
 	category_id: str
+	@validator("phone")
+
+	def validate_phone(cls, value):
+		try:
+			parsed = phonenumbers.parse(value, "RU")
+			if not phonenumbers.is_valid_number(parsed):
+				raise ValueError()
+		except Exception:
+			raise ValueError("Некорректный номер телефона")
+		return value
+
 
 
 class RepairRequestBase(BaseModel):
@@ -214,6 +225,7 @@ class ProductCreate(BaseModel):
 
 
 class ProductPriceCreate(BaseModel):
+	product_id: int
 	id: int
 	name: str
 	city_id: int
@@ -252,7 +264,7 @@ class ProductCreateSchema(BaseModel):
 	id: str
 	title: str
 	link: str
-	category_id: int
+	category_id: str
 	description: str
 	image: str
 	prices: List[ProductPriceSchema]

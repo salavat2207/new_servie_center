@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from sqlalchemy.orm import Session
+import shutil
+import os
+UPLOAD_DIR = "static/uploads"
 from app import schemas, crud
 from app.database import get_db
 from app.models import Product, ProductPrice, User, Admin
@@ -39,7 +42,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="admin/login")
 
 
-@router.post("/products добавить")
+@router.post("/admin/products")
 def create_product(
 		product_data: ProductCreateSchema,
 		db: Session = Depends(get_db),
@@ -50,6 +53,8 @@ def create_product(
 
 	product = Product(
 		id=product_data.id,
+		name=product_data.name,
+		category=product_data.category,
 		title=product_data.title,
 		link=product_data.link,
 		category_id=product_data.category_id,
@@ -181,6 +186,10 @@ def update_product(product_id: str, update_data: ProductUpdate, db: Session = De
 
 	if update_data.name is not None:
 		product.name = update_data.name
+	if update_data.category is not None:
+		product.category = update_data.category
+	if update_data.title is not None:
+		product.title = update_data.title
 	if update_data.link is not None:
 		product.link = update_data.link
 	if update_data.category_id is not None:
@@ -196,6 +205,8 @@ def update_product(product_id: str, update_data: ProductUpdate, db: Session = De
 	return {"message": "Товар обновлён", "product": {
 		"id": product.id,
 		"name": product.name,
+		"category": product.category,
+		"title": product.title,
 		"link": product.link,
 		"category_id": product.category_id,
 		"description": product.description,
@@ -223,9 +234,32 @@ def delete_product(product_id: str, db: Session = Depends(get_db)):
 
 
 
+from typing import Optional
+
 @router.get("/products")
 def get_products(
-	db: Session = Depends(get_db),
-	_ = Depends(get_current_admin)
+    city_id: Optional[int] = None,
+    db: Session = Depends(get_db),
+    _ = Depends(get_current_admin)
 ):
-	return db.query(Product).all()
+    query = db.query(Product)
+    if city_id is not None:
+        query = query.join(ProductPrice).filter(ProductPrice.city_id == city_id)
+    return query.all()
+
+
+# Загрузка изображений
+@router.post("/admin/upload-image")
+def upload_image(file: UploadFile = File(...)):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    return {"url": f"/{file_path}"}
+
+
+# Получение цен по городам для продукта
+@router.get("/admin/product-price/{product_id}", dependencies=[Depends(get_current_admin)])
+def get_prices_by_product(product_id: str, db: Session = Depends(get_db)):
+    prices = db.query(ProductPrice).filter_by(product_id=product_id).all()
+    return [{"city_id": p.city_id, "price": p.price} for p in prices]
