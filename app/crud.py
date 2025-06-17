@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
-from app.models import RepairRequest, RepairService
+from app.models import RepairRequest, RepairService, City
 from app.schemas import RepairRequestCreate, RepairRequestTelegram
 
 
 # def create_request(db: Session, request: schemas.RepairRequestCreate):
-# 	new_request = models.RepairRequest(**request.dict())
+# 	new_request = models.RepairRequest(**request.model_dump())
 # 	db.add(new_request)
 # 	db.commit()
 # 	db.refresh(new_request)
@@ -14,15 +14,16 @@ from app.schemas import RepairRequestCreate, RepairRequestTelegram
 
 
 def create_request(db: Session, request_data: schemas.RepairRequestCreate):
-    db_request = RepairRequest(**request_data.dict())
+    db_request = RepairRequest(**request_data.model_dump())
     db.add(db_request)
     db.commit()
     db.refresh(db_request)
+    db_request.city = db.query(City).filter(City.id == db_request.city_id).first()
     return db_request
 
 
 def create_admin(db: Session, admin: schemas.AdminCreate):
-    db_admin = models.Admin(**admin.dict())
+    db_admin = models.Admin(**admin.model_dump())
     db.add(db_admin)
     db.commit()
     db.refresh(db_admin)
@@ -98,7 +99,7 @@ def create_city(db: Session, city: schemas.CityCreate):
 #     return db.query(models.Master).filter(models.Master.city_id == city_id).all()
 
 def create_master(db: Session, master: schemas.MasterCreate):
-    db_master = models.Master(**master.dict())
+    db_master = models.Master(**master.model_dump())
     db.add(db_master)
     db.commit()
     db.refresh(db_master)

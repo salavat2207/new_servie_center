@@ -11,9 +11,10 @@ from app.auth import verify_password, create_access_token, get_current_admin, ge
 from app.database import SessionLocal, Base, engine
 from app.models import User
 from app.auth import get_password_hash
+from app.schemas import ProductUpdate
 
 #
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter()
 
 #
 # @router.post("/add_admin")
@@ -155,20 +156,60 @@ def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 """
 
 
-@router.put("/admin/product-price", dependencies=[Depends(get_current_admin)])
-def update_price(product_id: str, city_id: int, price: int, db: Session = Depends(get_db)):
-	price_entry = db.query(ProductPrice).filter_by(product_id=product_id, city_id=city_id).first()
-	if not price_entry:
-		raise HTTPException(status_code=404, detail="Цена не найдена")
-	price_entry.price = price
+# @router.put("/admin/product-price", dependencies=[Depends(get_current_admin)])
+# def update_price(product_id: str, city_id: int, price: int, db: Session = Depends(get_db)):
+# 	price_entry = db.query(ProductPrice).filter_by(product_id=product_id, city_id=city_id).first()
+# 	if not price_entry:
+# 		raise HTTPException(status_code=404, detail="Цена не найдена")
+# 	price_entry.price = price
+# 	db.commit()
+# 	return {"message": "Цена обновлена"}
+
+ # обязательно импортировать
+
+
+
+"""
+Обновленное редактирование товара
+"""
+@router.put("/admin/products/{product_id}", dependencies=[Depends(get_current_admin)])
+def update_product(product_id: str, update_data: ProductUpdate, db: Session = Depends(get_db)):
+	product = db.query(Product).filter_by(id=product_id).first()
+	if not product:
+		raise HTTPException(status_code=404, detail="Продукт не найден")
+
+
+	if update_data.name is not None:
+		product.name = update_data.name
+	if update_data.link is not None:
+		product.link = update_data.link
+	if update_data.category_id is not None:
+		product.category_id = update_data.category_id
+	if update_data.description is not None:
+		product.description = update_data.description
+	if update_data.image is not None:
+		product.image = update_data.image
+
 	db.commit()
-	return {"message": "Цена обновлена"}
+	db.refresh(product)
+
+	return {"message": "Товар обновлён", "product": {
+		"id": product.id,
+		"name": product.name,
+		"link": product.link,
+		"category_id": product.category_id,
+		"description": product.description,
+		"image": product.image,
+	}}
+
+
+
+
 
 
 """
 Удаление товара
 """
-
 
 @router.delete("/admin/products/{product_id}", dependencies=[Depends(get_current_admin)])
 def delete_product(product_id: str, db: Session = Depends(get_db)):
@@ -178,3 +219,13 @@ def delete_product(product_id: str, db: Session = Depends(get_db)):
 	db.delete(product)
 	db.commit()
 	return {"message": "Продукт удалён"}
+
+
+
+
+@router.get("/products")
+def get_products(
+	db: Session = Depends(get_db),
+	_ = Depends(get_current_admin)
+):
+	return db.query(Product).all()

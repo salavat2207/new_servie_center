@@ -1,5 +1,4 @@
-from http.client import HTTPException
-
+from fastapi import HTTPException
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -7,7 +6,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.auth import authenticate_user, create_access_token
 from app.routers import cities, requests, feedback, masters, admin, auth, products
 from app.database import create_db_and_tables
-
 
 app = FastAPI()
 
@@ -24,12 +22,10 @@ app.add_middleware(
 Подключение роутеров
 """
 app.include_router(cities.router)
-app.include_router(requests.router)
 # app.include_router(feedback.router)
 app.include_router(masters.router)
-app.include_router(admin.router)
-app.include_router(products.router)
-app.include_router(requests.router, prefix="/api", tags=["Requests"])
+app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(requests.router, prefix="/requests", tags=["requests"])
 app.include_router(products.router, prefix="/products", tags=["products"])
 
 
@@ -39,8 +35,6 @@ app.include_router(products.router, prefix="/products", tags=["products"])
 @app.on_event('startup')
 def startup_event():
     create_db_and_tables()
-
-
 
 
 """

@@ -13,7 +13,7 @@ class City(Base):
 	phone = Column(String)
 	adress = Column(String)
 	masters = relationship("Master", back_populates="city")
-	requests = relationship("RepairRequest", back_populates="city")
+	requests = relationship('RepairRequest', back_populates='city')
 	code = Column(String(3), unique=True, nullable=False)
 
 
@@ -158,6 +158,8 @@ class Application(Base):
 class Product(Base):
 	__tablename__ = "products"
 	id = Column(String, primary_key=True)
+	name = Column(String, nullable=False)
+	category = Column(String, nullable=False)
 	title = Column(String, unique=True, index=True)
 	link = Column(String, index=True)
 	category_id = Column(Integer, ForeignKey("categories.id"))

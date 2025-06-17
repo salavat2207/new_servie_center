@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict, validator
 from datetime import datetime
 from typing import Optional, Annotated, List
 
-from sqlalchemy import Column
+from sqlalchemy import Column, Integer, ForeignKey
 
 
 class RepairRequestCreate(BaseModel):
@@ -141,6 +141,17 @@ class ProductsCreate(BaseModel):
 	description: str
 	price: int
 	city_id: int
+
+
+class ProductUpdate(BaseModel):
+	id: Optional[int]
+	title: Optional[str]
+	name: Optional[str]
+	link: Optional[str]
+	category_id: Optional[int]
+	description: Optional[str]
+	image: Optional[str]
+
 
 
 class RepairServiceBase(BaseModel):

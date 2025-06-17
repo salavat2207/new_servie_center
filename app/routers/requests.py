@@ -15,7 +15,7 @@ import asyncio
 
 router = APIRouter()
 
-router = APIRouter(prefix='/requests')
+router = APIRouter()
 
 
 
@@ -318,7 +318,7 @@ async def send_telegram_message_async(message: str):
 Итоговый рабочий вариант
 """
 
-@router.post('/Заявка на консультацию:')
+@router.post('/feedback')
 async def submit_request(request: schemas.RepairRequestCreate, db: Session = Depends(get_db)):
 	new_request = crud.create_request(db, request)
 	threading.Thread(target=notify_city_masters, args=(new_request.city_id, new_request)).start()
@@ -368,7 +368,7 @@ async def submit_request(request: schemas.RepairRequestCreate, db: Session = Dep
 # 	return {"message": "Заявка успешно отправлена"}
 
 
-@router.post("/requests/repair")
+@router.post("/")
 def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
 	# Кешируем город
 	if request.city_id not in city_cache:
@@ -415,3 +415,11 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
 	asyncio.create_task(send_telegram_message_async(message))
 
 	return {"message": "Заявка успешно отправлена"}
+
+
+
+
+
+@router.get("/")
+def get_requests(db: Session = Depends(get_db)):
+	return db.query(RepairRequest).all()

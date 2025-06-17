@@ -33,6 +33,7 @@ def notify_city_masters(city_id, requests_data):
     text = (
         f'🛠 Заявка на консультацию:'
         # f'\nИмя: {requests_data.name}'
+            f'\n📍 Город: {requests_data.city.name}'
             f'\n📱 Телефон: {requests_data.phone}'
             f'\n📱 Модель / Неисправность: {requests_data.description}')
 
