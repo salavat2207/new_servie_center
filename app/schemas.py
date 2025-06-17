@@ -1,34 +1,38 @@
 from pydantic import BaseModel, ConfigDict, validator
 from datetime import datetime
 from typing import Optional, Annotated, List
-
+import phonenumbers
+from pydantic import BaseModel, validator
 from sqlalchemy import Column, Integer, ForeignKey
 
 
 class RepairRequestCreate(BaseModel):
 	# name: str
-	phone: int
+	phone: str
 	description: str
 	city_id: int
 
+	@validator("phone")
+	def validate_phone(cls, value):
+		try:
+			parsed = phonenumbers.parse(value, "RU")
+			if not phonenumbers.is_valid_number(parsed):
+				raise ValueError()
+		except Exception:
+			raise ValueError("Некорректный номер телефона")
+		return value
 
 
 class RepairRequestTelegram(BaseModel):
-	id: str
-	city_id: int
-	service_id: int
+	product_id: str
+	service_id: str
 	name: str
+	phone: str
+	city_id: int
 	description: str
 	duration: str
 	price: int
 	category_id: str
-	product_id: str
-
-
-
-
-
-
 
 
 class RepairRequestBase(BaseModel):
@@ -153,7 +157,6 @@ class ProductUpdate(BaseModel):
 	image: Optional[str]
 
 
-
 class RepairServiceBase(BaseModel):
 	id: str
 	name: str
@@ -173,7 +176,6 @@ class RepairRequestTelegram(BaseModel):
 	duration: str
 	price: int
 	category_id: str
-
 
 
 class RepairServiceCreate(RepairServiceBase):
