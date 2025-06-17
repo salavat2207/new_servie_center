@@ -39,7 +39,7 @@ repair_services = [
     ),
     RepairService(id=2,
                   city_id=1,
-                  service_id="iphone-16-pro- battery-replacement",
+                  service_id="iphone-16-pro-battery-replacement",
                   name="Замена аккумулятора",
                   description="Замена аккумулятора",
                   duration="30-60 минут",
@@ -64,7 +64,28 @@ masters = [
 
 
 products = [
-    Product(id="iphone-16-pro", title="Apple iPhone 16 Pro", description='Ремонт iPhone 16 Pro')
+    Product(
+        id="iphone-16-pro",
+        name="iPhone 16 Pro",
+        category="Смартфон",
+        title="Apple iPhone 16 Pro",
+        description="Ремонт iPhone 16 Pro",
+    ),
+    Product(
+        id="iphone-16-pro-max",
+        name="iPhone 16 Pro Max",
+        category="Смартфон",
+        title="Apple iPhone 16 Pro Max",
+        description="Ремонт iPhone 16 Pro Max",
+    )
+]
+
+
+product_prices = [
+    ProductPrice(product_id="iphone-16-pro", city_id=1, price=8490),
+    ProductPrice(product_id="iphone-16-pro", city_id=2, price=8590),
+    ProductPrice(product_id="iphone-16-pro", city_id=3, price=8690),
+    ProductPrice(product_id="iphone-16-pro-max", city_id=1, price=8990),
 ]
 
 
@@ -75,6 +96,7 @@ db.add_all(admin)
 db.add_all(repair_services)
 db.add_all(masters)
 db.add_all(products)
+db.add_all(product_prices)
 db.commit()
 db.close()
 
