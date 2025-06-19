@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 sqlalchemy
 pydantic
 alembic
@@ -8,3 +8,4 @@ python-telegram-bot
 python-jose
 passlib
 bcrypt
+phonenumbers
