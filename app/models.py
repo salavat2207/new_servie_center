@@ -1,11 +1,12 @@
-from sqlalchemy import Column, Integer, String, ForeignKey,Text, Enum, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Enum, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
-
 
 """
 Город сервисного центра
 """
+
+
 class City(Base):
 	__tablename__ = 'cities'
 	id = Column(Integer, primary_key=True)
@@ -20,6 +21,8 @@ class City(Base):
 """
 Запрос на ремонт
 """
+
+
 class RepairRequest(Base):
 	__tablename__ = 'requests'
 	id = Column(Integer, primary_key=True)
@@ -34,7 +37,7 @@ class RepairRequest(Base):
 
 class RepairService(Base):
 	__tablename__ = "repair_services"
-	id = Column(Integer,primary_key=True, autoincrement=True)
+	id = Column(Integer, primary_key=True, autoincrement=True)
 	city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
 	service_id = Column(String)
 	name = Column(String, nullable=False)
@@ -45,6 +48,18 @@ class RepairService(Base):
 	product_id = Column(String, ForeignKey("products.id"))  # ← Вот это поле обязательно должно быть
 
 	product = relationship("Product", back_populates="repair_services", foreign_keys=[product_id])
+	prices = relationship("RepairServicePrice", back_populates="repair_service", cascade="all, delete-orphan")
+
+
+class RepairServicePrice(Base):
+	__tablename__ = "repair_service_prices"
+
+	id = Column(Integer, primary_key=True)
+	service_id = Column(Integer, ForeignKey("repair_services.id"), nullable=False)
+	city_code = Column(String, nullable=False)  # Примеры: "CHE", "MGN", "EKB"
+	price = Column(Integer, nullable=False)
+
+	repair_service = relationship("RepairService", back_populates="prices")
 
 
 class Service(Base):
@@ -71,6 +86,8 @@ class Service(Base):
 """
 Мастер
 """
+
+
 class Master(Base):
 	__tablename__ = 'masters'
 	id = Column(Integer, primary_key=True)
@@ -80,9 +97,12 @@ class Master(Base):
 
 	city = relationship("City", back_populates="masters")
 
+
 """
 Обратная связь
 """
+
+
 class Feedback(Base):
 	__tablename__ = 'feedbacks'
 	id = Column(Integer, primary_key=True, index=True)
@@ -91,10 +111,11 @@ class Feedback(Base):
 	message = Column(String, nullable=False)
 
 
-
 """
 Админ
 """
+
+
 # class Admin(Base):
 # 	__tablename__ = 'admin'
 # 	id = Column(Integer, primary_key=True, index=True)
@@ -104,15 +125,12 @@ class Feedback(Base):
 # 	telegram_id = 908977119
 
 
-
-
 class Admin(Base):
 	__tablename__ = 'admin'
 	id = Column(Integer, primary_key=True, index=True)
 	username = Column(String, unique=True, index=True)
 	password = Column(String(128), nullable=False)
 	is_superadmin = Column(Boolean, default=True)
-
 
 
 class User(Base):
@@ -127,14 +145,6 @@ class Category(Base):
 	__tablename__ = 'categories'
 	id = Column(Integer, primary_key=True, index=True)
 	name = Column(String, unique=True, index=True)
-
-
-
-
-
-
-
-
 
 
 class Application(Base):
@@ -154,7 +164,6 @@ class Application(Base):
 	city = relationship("City")
 
 
-
 class Product(Base):
 	__tablename__ = "products"
 	id = Column(String, primary_key=True)
@@ -172,11 +181,11 @@ class Product(Base):
 	prices = relationship("ProductPrice", back_populates="product")
 
 
-
-
 """
 Модель ProductPrice, которая будет связывать Product и City с конкретной ценой
 """
+
+
 class ProductPrice(Base):
 	__tablename__ = "product_prices"
 	id = Column(Integer, primary_key=True, index=True)
@@ -186,10 +195,3 @@ class ProductPrice(Base):
 
 	product = relationship("Product", back_populates="prices")
 	city = relationship("City")
-
-
-
-
-
-
-
