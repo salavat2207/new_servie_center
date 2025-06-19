@@ -16,28 +16,9 @@ from app.models import User
 from app.auth import get_password_hash
 from app.schemas import ProductUpdate
 
-#
-router = APIRouter()
 
 #
-# @router.post("/add_admin")
-# def add_admin(admin: schemas.AdminCreate, db: Session = Depends(get_db)):
-#     return crud.create_admin(db, admin)
-#
-#
-# @router.post("/categories/")
-# def add_category(name: str, user=Depends(get_current_user)):
-#     if not user["is_superadmin"]:
-#         raise HTTPException(status_code=403, detail="Not authorized")
-#
-#
-# @router.get("/applications/")
-# def get_applications(user=Depends(get_current_user)):
-#     # Для мастеров — только свои заявки
-#     if user["is_superadmin"]:
-#         return crud.get_all_requests(db)
-#     else:
-#         return crud.get_requests_by_master(db, user["id"])
+router = APIRouter()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="admin/login")
 
@@ -263,3 +244,16 @@ def upload_image(file: UploadFile = File(...)):
 def get_prices_by_product(product_id: str, db: Session = Depends(get_db)):
     prices = db.query(ProductPrice).filter_by(product_id=product_id).all()
     return [{"city_id": p.city_id, "price": p.price} for p in prices]
+
+
+
+
+
+router.post("/admin/requests/{request_id}/status", dependencies=[Depends(get_current_admin)])
+def update_request_status(request_id: int, data: dict, db: Session = Depends(get_db)):
+    request = db.query(Request).filter_by(id=request_id).first()
+    if not request:
+        raise HTTPException(status_code=404, detail="Заявка не найдена")
+    request.status = data.get("status")
+    db.commit()
+    return {"message": "Статус обновлён", "status": request.status}
