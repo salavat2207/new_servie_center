@@ -47,3 +47,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=401, detail="Неверные данные")
     token = create_access_token(data={"sub": user["username"]})
     return {"access_token": token, "token_type": "bearer"}
+
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+
+    port = int(os.environ.get("PORT", 8000))  # Render задаёт $PORT автоматически
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port)
