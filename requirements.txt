@@ -10,3 +10,4 @@ passlib
 bcrypt
 phonenumbers
 requests
+python-multipart
