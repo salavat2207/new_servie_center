@@ -1,14 +1,18 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import RepairService, RepairServicePrice
+from app.models import RepairService, RepairServicePrice, City
 
 router = APIRouter()
 
 
 @router.get("/services/")
 def get_services(city_code: str = Query(...), db: Session = Depends(get_db)):
-    services = db.query(RepairService).all()
+    city = db.query(City).filter(City.code == city_code.upper()).first()
+    if not city:
+        raise HTTPException(status_code=404, detail="Город не найден")
+
+    services = db.query(RepairService).filter(RepairService.city_id == city.id).all()
     result = []
 
     for service in services:
@@ -18,6 +22,7 @@ def get_services(city_code: str = Query(...), db: Session = Depends(get_db)):
         result.append({
             "id": service.id,
             "name": service.name,
+            'city_id': service.city_id,
             "description": service.description,
             "duration": service.duration,
             "product_id": service.product_id,
