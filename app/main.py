@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.auth import authenticate_user, create_access_token
-from app.routers import cities, requests, feedback, masters, admin, auth, products
+from app.routers import cities, requests, feedback, masters, admin, auth, products, services
 from app.database import create_db_and_tables
 
 app = FastAPI()
@@ -41,6 +41,7 @@ app.include_router(masters.router)
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(requests.router, prefix="/requests", tags=["requests"])
 app.include_router(products.router, prefix="/products", tags=["products"])
+app.include_router(services.router)
 
 
 

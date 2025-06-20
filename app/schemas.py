@@ -197,6 +197,18 @@ class RepairServiceRead(RepairServiceBase):
 	pass
 
 
+
+class RepairServiceCreate(BaseModel):
+	id: int
+	name: str
+	service_id: str
+	price: int
+	city_id: int
+	description: str
+	duration: str
+
+
+
 class ProductBase(BaseModel):
 	id: str
 	title: str
@@ -225,14 +237,15 @@ class ProductCreate(BaseModel):
 
 
 class ProductPriceCreate(BaseModel):
-	product_id: int
 	id: int
+	product_id: str
+	service_id: str
 	name: str
 	city_id: int
 	price: int
 	description: str
 	duration: str
-
+	category_id: str
 
 class ProductPriceSchema(BaseModel):
 	product_id: str

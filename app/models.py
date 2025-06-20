@@ -45,7 +45,7 @@ class RepairService(Base):
 	duration = Column(String, nullable=False)
 	price = Column(Integer, nullable=False)
 	category_id = Column(String, ForeignKey("categories.id"))
-	product_id = Column(String, ForeignKey("products.id"))  # ← Вот это поле обязательно должно быть
+	product_id = Column(String, ForeignKey("products.id"))
 
 	product = relationship("Product", back_populates="repair_services", foreign_keys=[product_id])
 	prices = relationship("RepairServicePrice", back_populates="repair_service", cascade="all, delete-orphan")
