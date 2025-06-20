@@ -26,7 +26,7 @@ def get_services(city_code: str = Query(...), db: Session = Depends(get_db)):
             "description": service.description,
             "duration": service.duration,
             "product_id": service.product_id,
-            "price": price,
+            "price": service.price if price is None else price,
         })
 
     return result
