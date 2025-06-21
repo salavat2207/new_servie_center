@@ -41,7 +41,7 @@ app.include_router(masters.router)
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(requests.router, prefix="/requests", tags=["requests"])
 app.include_router(products.router, prefix="/products", tags=["products"])
-app.include_router(services.router)
+app.include_router(services.router, prefix="/services", tags=["services"])
 
 
 
