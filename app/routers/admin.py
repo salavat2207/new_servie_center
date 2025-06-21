@@ -289,25 +289,56 @@ def upload_image(file: UploadFile = File(...)):
 #     prices = db.query(ProductPrice).filter_by(product_id=product_id).all()
 #     return [{"city_id": p.city_id, "price": p.price} for p in prices]
 
+
+
+# @router.get("/admin/product-price/{service_id}", dependencies=[Depends(get_current_admin)])
+# def get_prices_by_service_id(service_id: str, db: Session = Depends(get_db)):
+#     service = db.query(RepairService).filter_by(service_id=service_id).first()
+#
+#     if not service:
+#         raise HTTPException(status_code=404, detail="Услуга не найдена")
+#
+#     print(f"[DEBUG] Услуга: {service.service_id} — {service.name}")
+#
+#     result = []
+#
+#     for price in service.prices:
+#         print(f"[DEBUG] Цена: {price.price}, город: {price.city_code}")
+#         city = db.query(City).filter(City.code == price.city_code).first()
+#         result.append({
+#             "city": city.name if city else price.city_code,
+#             "price": price.price
+#         })
+#
+#     return {
+#         "service_id": service.service_id,
+#         "service_name": service.name,
+#         "prices": result
+#     }
 @router.get("/admin/product-price/{service_id}", dependencies=[Depends(get_current_admin)])
-def get_prices_by_product(service_id: str, db: Session = Depends(get_db)):
-    services = db.query(RepairService).filter_by(service_id=service_id).all()
-    print(f"[DEBUG] Найдено услуг: {len(services)}")
+def get_prices_by_service_id(service_id: str, db: Session = Depends(get_db)):
+    service = db.query(RepairService).filter_by(service_id=service_id).first()
+    if not service:
+        raise HTTPException(status_code=404, detail="Услуга не найдена")
+
+    cities = db.query(City).all()
+    prices_by_city = {price.city_code: price.price for price in service.prices}
 
     result = []
+    for city in cities:
+        result.append({
+            "city": city.name,
+            "city_code": city.code,
+            "price": prices_by_city.get(city.code)
+        })
 
-    for service in services:
-        print(f"[DEBUG] Услуга: {service.service_id}")
-        for price in service.prices:
-            print(f"[DEBUG] Цена: {price.price}, город: {price.city_code}")
-            city = db.query(City).filter(City.code == price.city_code).first()
-            result.append({
-                "service_name": service.name,
-                "city": city.name if city else price.city_code,
-                "price": price.price
-            })
+    return {
+        "service_id": service.service_id,
+        "service_name": service.name,
+        'result': result
+    }
 
-    return result
+
 #
 # router.post("/admin/requests/{request_id}/status", dependencies=[Depends(get_current_admin)])
 # def update_request_status(request_id: int, data: dict, db: Session = Depends(get_db)):
@@ -317,3 +348,6 @@ def get_prices_by_product(service_id: str, db: Session = Depends(get_db)):
 #     request.status = data.get("status")
 #     db.commit()
 #     return {"message": "Статус обновлён", "status": request.status}
+
+
+
