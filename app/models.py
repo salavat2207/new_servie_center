@@ -175,10 +175,11 @@ class Product(Base):
 	description = Column(String, nullable=True)
 	image = Column(String)
 	city_id = Column(Integer, ForeignKey("cities.id"))
+
 	# service_id = Column(Integer, ForeignKey("repair_services.id"))
 
 	repair_services = relationship("RepairService", back_populates="product")
-	prices = relationship("ProductPrice", back_populates="product")
+	prices = relationship("ProductPrice", back_populates="product", passive_deletes=True)
 
 
 """
@@ -189,7 +190,7 @@ class Product(Base):
 class ProductPrice(Base):
 	__tablename__ = "product_prices"
 	id = Column(Integer, primary_key=True, index=True)
-	product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+	product_id = Column(Integer, ForeignKey("products.id", ondelete='CASCADE'), nullable=False)
 	city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
 	price = Column(Integer, nullable=False)
 
