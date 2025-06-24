@@ -254,6 +254,7 @@ class ProductPriceSchema(BaseModel):
 class ProductPriceOut(BaseModel):
 	id: int
 	name: str
+	# product_id: str
 	price: int
 	city_id: int
 	description: str
