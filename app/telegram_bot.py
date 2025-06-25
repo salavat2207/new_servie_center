@@ -75,79 +75,109 @@ def handle_callback(callback):
     if data.startswith("start_"):
         req_id = int(data.split("_")[1])
         req = db.query(RepairRequest).get(req_id)
+
         if req:
             logging.info(f"Текущий статус заявки {req_id}: {req.status}")
-            if req.status and req.status != "Новая заявка":
+
+            if req.status.strip().lower() != "новая заявка":
                 requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json={"chat_id": chat_id, "text": "❗ Заявка уже в работе или завершена."}
+                    json={
+                        "chat_id": chat_id,
+                        "text": f"❗ Заявка {req.request_number} уже в работе или завершена."
+                    }
                 )
             else:
                 req.status = "В работе"
                 req.accepted_by = str(chat_id)
                 db.commit()
-                requests.post(
+
+                # Сообщение о принятии в работу
+                work_msg = requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json={"chat_id": chat_id, "text": "✅ Заявка принята в работу."}
+                    json={
+                        "chat_id": chat_id,
+                        "text": f"✅ Заявка {req.request_number} принята в работу."
+                    }
                 )
+                work_message_id = work_msg.json().get("result", {}).get("message_id")
+
                 requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
                     json={
                         "chat_id": chat_id,
-                        "text": "🛠 Вы можете завершить заявку, когда работа будет выполнена.",
+                        "text": f"🛠 Вы можете завершить заявку {req.request_number}, когда работа будет выполнена.",
                         "reply_markup": {
                             "inline_keyboard": [
-                                [{"text": "✔️ Завершить", "callback_data": f"done_{req.id}"}]
+                                [{"text": "✔️ Завершить", "callback_data": f"done_{req.id}_{work_message_id}"}]
                             ]
                         }
                     }
                 )
+
                 requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageReplyMarkup",
-                    json={"chat_id": chat_id, "message_id": message_id, "reply_markup": {"inline_keyboard": []}}
+                    json={
+                        "chat_id": chat_id,
+                        "message_id": message_id,
+                        "reply_markup": {"inline_keyboard": []}
+                    }
                 )
 
-
-    # elif data.startswith("done_"):
-    #     req_id = int(data.split("_")[1])
-    #     req = db.query(RepairRequest).get(req_id)
-    #     if req:
-    #         req.status = "Завершено"
-    #         db.commit()
-    #         requests.post(
-    #             f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageReplyMarkup",
-    #             json={"chat_id": chat_id, "message_id": message_id, "reply_markup": {"inline_keyboard": []}}
-    #         )
-    #         requests.post(
-    #             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-    #             json={"chat_id": chat_id, "text": "✅ Заявка завершена."}
-    #         )
-    # db.close()
     elif data.startswith("done_"):
-        req_id = int(data.split("_")[1])
+        parts = data.split("_")
+        req_id = int(parts[1])
+        work_message_id = int(parts[2]) if len(parts) > 2 else None
         req = db.query(RepairRequest).get(req_id)
+
         if req:
             if str(chat_id) != str(req.accepted_by):
                 requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json={"chat_id": chat_id, "text": "⛔ Завершить заявку может только тот, кто её принял."}
+                    json={
+                        "chat_id": chat_id,
+                        "text": f"⛔ Заявку {req.request_number} может завершить только тот, кто её принял."
+                    }
                 )
             elif req.status == "Завершено":
                 requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json={"chat_id": chat_id, "text": "ℹ️ Заявка уже завершена."}
+                    json={
+                        "chat_id": chat_id,
+                        "text": f"ℹ️ Заявка {req.request_number} уже завершена."
+                    }
                 )
             else:
                 req.status = "Завершено"
                 db.commit()
+
                 requests.post(
-                    f"https://api.telegram.org/bot{BOT_TOKEN}/editMessageReplyMarkup",
-                    json={"chat_id": chat_id, "message_id": message_id, "reply_markup": {"inline_keyboard": []}}
+                    f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage",
+                    json={
+                        "chat_id": chat_id,
+                        "message_id": message_id
+                    }
                 )
+
+                if work_message_id:
+                    requests.post(
+                        f"https://api.telegram.org/bot{BOT_TOKEN}/deleteMessage",
+                        json={
+                            "chat_id": chat_id,
+                            "message_id": work_message_id
+                        }
+                    )
+
                 requests.post(
                     f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
-                    json={"chat_id": chat_id, "text": "✅ Заявка завершена."}
+                    json={
+                        "chat_id": chat_id,
+                        "text": f"✅ Заявка {req.request_number} завершена."
+                    }
                 )
+
+    db.close()
+
 
 def start_polling():
     logging.info("Starting polling...")
@@ -188,3 +218,8 @@ def generate_request_data(mapper, connect, target):
 
 if __name__ == "__main__":
     start_polling()
+
+
+
+
+
