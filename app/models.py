@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Text, Enum, Boolean
 from sqlalchemy.orm import relationship
 from app.database import Base
+from sqlalchemy import DateTime
+from datetime import datetime
 
 """
 Город сервисного центра
@@ -24,15 +26,18 @@ class City(Base):
 
 
 class RepairRequest(Base):
-	__tablename__ = 'requests'
+	__tablename__ = "requests"
+
 	id = Column(Integer, primary_key=True)
-	city_id = Column(Integer, ForeignKey('cities.id'), nullable=False)
+	city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
 	phone = Column(String, nullable=False)
 	description = Column(String, nullable=False)
-	request_number = Column(String, unique=True, index=True)
-	# name = Column(String, default='Новая заявка')
+	request_number = Column(String, nullable=False, unique=True)
+	accepted_at = Column(DateTime, nullable=False)
+	accepted_by = Column(String, nullable=True)
+	status = Column(String, default='Новая заявка')
 
-	city = relationship("City", back_populates="requests")
+	city = relationship("City")
 
 
 class RepairService(Base):

@@ -6,6 +6,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.auth import authenticate_user, create_access_token
 from app.routers import cities, requests, feedback, masters, admin, auth, products, services
 from app.database import create_db_and_tables
+from app.telegram_bot import start_polling
+import threading
 
 app = FastAPI()
 
@@ -17,7 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-#
+
+
 # """
 # Добавить перед запуском
 # """
@@ -31,6 +34,15 @@ app.add_middleware(
 #     allow_methods=["GET", "POST", "PUT", "DELETE"],
 #     allow_headers=["Authorization", "Content-Type"],
 # )
+
+"""
+Старт ТГ Бота
+"""
+@app.on_event("startup")
+def start_bot():
+    threading.Thread(target=start_polling, daemon=True).start()
+
+
 
 """
 Подключение роутеров

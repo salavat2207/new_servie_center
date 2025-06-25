@@ -79,6 +79,12 @@ class RepairRequestOut(BaseModel):
 	phone: str
 	description: str
 	city_id: int
+	status: Optional[str] = None
+	accepted_at: Optional[datetime] = None
+
+	model_config = {
+		"from_attributes": True
+	}
 
 
 class Config:
