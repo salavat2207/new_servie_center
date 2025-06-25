@@ -9,6 +9,8 @@ from typing import List
 from app.models import Application, City, Master, RepairRequest, Product, RepairService
 from app.schemas import ApplicationCreate, ApplicationOut, RepairRequestBase, RepairRequestTelegram
 from app.telegram_bot import notify_city_masters
+
+
 import httpx
 import os
 import asyncio

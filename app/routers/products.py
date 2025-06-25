@@ -4,10 +4,9 @@ from sqlalchemy.orm import Session
 from app import crud, schemas, telegram_bot, models
 from typing import List
 from app.models import Application, City, Master, RepairRequest, Product, RepairService
-from app.schemas import ApplicationCreate, ApplicationOut, ProductRead, ProductCreate, ProductPriceCreate, \
-    ProductPriceOut
+from app.schemas import ApplicationCreate, ApplicationOut, ProductRead, ProductCreate, ProductPriceCreate, ProductPriceOut
+# from app.telegram_bot import notify_city_masters
 from app.telegram_bot import notify_city_masters
-
 
 router = APIRouter(
     prefix="/products",

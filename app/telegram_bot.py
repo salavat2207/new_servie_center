@@ -25,7 +25,6 @@ app = FastAPI()
 def notify_city_masters(city_id, requests_data):
     db = SessionLocal()
     masters = db.query(Master).filter(Master.city_id == city_id).all()
-    logging.info(f"[DEBUG] Найдено мастеров: {len(masters)}")
 
     # Формируем текст с номером заявки
     text = (
@@ -37,7 +36,6 @@ def notify_city_masters(city_id, requests_data):
     for master in masters:
         chat_id = master.telegram_id
 
-        # Кнопки только если заявка ещё не в работе
         if requests_data.status in ["В работе", "Завершено"]:
             reply_markup = None
         else:
@@ -50,7 +48,6 @@ def notify_city_masters(city_id, requests_data):
                 ]
             }
 
-        # Отправляем сообщение с заявкой
         response = requests.post(
             f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
             json={
