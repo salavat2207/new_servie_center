@@ -23,3 +23,4 @@ docker compose up --build
 docker compose run --rm fastapi_backend alembic upgrade head
 ```
 
+# 🤖 Проверка авто-деплоя
