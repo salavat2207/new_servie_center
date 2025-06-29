@@ -8,12 +8,19 @@ from app.routers import cities, requests, feedback, masters, admin, auth, produc
 from app.database import create_db_and_tables
 from app.telegram_bot import start_polling
 import threading
+import logging
 
 app = FastAPI()
 
+origins = [
+    "http://localhost:8000",
+    "http://localhost:5173",
+    "http://185.177.216.134:5173",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,6 +83,13 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     return {"access_token": token, "token_type": "bearer"}
 
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s | %(levelname)s | %(message)s")
+logger = logging.getLogger(__name__)
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("🛑 FastAPI остановлен")
 
 if __name__ == "__main__":
     import uvicorn

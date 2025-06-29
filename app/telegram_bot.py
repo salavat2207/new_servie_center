@@ -1,4 +1,9 @@
 import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 logging.basicConfig(
     filename="bot.log",

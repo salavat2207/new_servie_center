@@ -1,0 +1,5 @@
+#!/bin/bash
+GIT_WORK_TREE=/root/new_servie_center git checkout -f main
+cd /root/new_servie_center || exit
+docker compose down -v
+docker compose up --build -d

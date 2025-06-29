@@ -12,15 +12,15 @@ class RepairRequestCreate(BaseModel):
 	description: str
 	city_id: int
 
-	@validator("phone")
-	def validate_phone(cls, value):
-		try:
-			parsed = phonenumbers.parse(value, "RU")
-			if not phonenumbers.is_valid_number(parsed):
-				raise ValueError()
-		except Exception:
-			raise ValueError("Некорректный номер телефона")
-		return value
+	# @validator("phone")
+	# def validate_phone(cls, value):
+	# 	try:
+	# 		parsed = phonenumbers.parse(value, "RU")
+	# 		if not phonenumbers.is_valid_number(parsed):
+	# 			raise ValueError()
+	# 	except Exception:
+	# 		raise ValueError("Некорректный номер телефона")
+	# 	return value
 
 
 class RepairRequestTelegram(BaseModel):
@@ -31,18 +31,18 @@ class RepairRequestTelegram(BaseModel):
 	city_id: int
 	description: str
 	duration: str
-	price: int
+	price: Optional[int] = None
 	category_id: str
 
-	@validator("phone")
-	def validate_phone(cls, value):
-		try:
-			parsed = phonenumbers.parse(value, "RU")
-			if not phonenumbers.is_valid_number(parsed):
-				raise ValueError()
-		except Exception:
-			raise ValueError("Некорректный номер телефона")
-		return value
+	# @validator("phone")
+	# def validate_phone(cls, value):
+	# 	try:
+	# 		parsed = phonenumbers.parse(value, "RU")
+	# 		if not phonenumbers.is_valid_number(parsed):
+	# 			raise ValueError()
+	# 	except Exception:
+	# 		raise ValueError("Некорректный номер телефона")
+	# 	return value
 
 
 class RepairRequestBase(BaseModel):
@@ -62,11 +62,22 @@ class RepairRequestUpdate(BaseModel):
 	status: str
 
 
-class ServiceCreate(BaseModel):
-	name: str
-	price: int
-	city_id: int
+# class ServiceCreate(BaseModel):
+# 	name: str
+# 	price: int
+# 	city_id: int
 
+class ServiceCreate(BaseModel):
+    model: str
+    url: str
+    name: str
+    price: Optional[int] = None
+    description: str
+class ServiceOut(ServiceCreate):
+    id: int
+
+    class Config:
+        orm_mode = True
 
 class AdminCreate(BaseModel):
 	username: str
@@ -159,7 +170,7 @@ class ProductsCreate(BaseModel):
 	name: str
 	category_id: str
 	description: str
-	price: int
+	price: Optional[int] = None
 	city_id: int
 
 
@@ -178,7 +189,7 @@ class RepairServiceBase(BaseModel):
 	name: str
 	description: str
 	duration: str
-	price: float
+	price: Optional[int] = None
 	category_id: str
 
 
@@ -190,7 +201,7 @@ class RepairRequestTelegram(BaseModel):
 	city_id: int
 	description: str
 	duration: str
-	price: int
+	price: Optional[int] = None
 	category_id: str
 
 
@@ -206,7 +217,7 @@ class RepairServiceCreate(BaseModel):
 	id: int
 	name: str
 	service_id: str
-	price: int
+	price: Optional[int] = None
 	city_id: int
 	description: str
 	duration: str
@@ -245,7 +256,7 @@ class ProductPriceCreate(BaseModel):
 	service_id: str
 	name: str
 	city_id: int
-	price: int
+	price: Optional[int] = None
 	description: str
 	duration: str
 	category_id: str
@@ -254,14 +265,14 @@ class ProductPriceCreate(BaseModel):
 class ProductPriceSchema(BaseModel):
 	product_id: str
 	city_id: int
-	price: int
+	price: Optional[int] = None
 
 
 class ProductPriceOut(BaseModel):
 	id: int
 	name: str
 	# product_id: str
-	price: int
+	price: Optional[int] = None
 	city_id: int
 	description: str
 	duration: str
@@ -302,7 +313,7 @@ class RepairServicePatch(BaseModel):
 	name: Optional[str]
 	description: Optional[str]
 	duration: Optional[str]
-	price: Optional[int]
+	price: Optional[int] = None
 	product_id: Optional[str]
 	category_id: Optional[str]
 	city_id: Optional[int]
