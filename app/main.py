@@ -12,7 +12,6 @@ import logging
 from fastapi import FastAPI
 from typing import List
 from .schemas import Product
-from app.database import Base, engine
 
 
 app = FastAPI()
@@ -20,8 +19,8 @@ app = FastAPI()
 origins = [
   "http://localhost:8000",
   "http://localhost:5173",
-  "http://185.177.216.134:5173",
-  "http://xn----7sbfcggdzf6eibe.xn--p1ai",
+  "http://185.177.216.134:5173",      # если фронт на 5173
+  "http://xn----7sbfcggdzf6eibe.xn--p1ai",  # продакшен-домен
   "https://xn----7sbfcggdzf6ejbe.xn--p1ai",
 ]
 
