@@ -1,9 +1,13 @@
-from pydantic import BaseModel, ConfigDict, validator
+from pydantic import BaseModel, ConfigDict, validator, constr
 from datetime import datetime
 from typing import Optional, Annotated, List
 import phonenumbers
 from pydantic import BaseModel, validator, Field
 from sqlalchemy import Column, Integer, ForeignKey
+from uuid import UUID, uuid4
+from typing import Dict, List, Literal
+
+CityCode = Literal['CHE', 'MGN', 'EKB']
 
 
 class RepairRequestCreate(BaseModel):
@@ -12,37 +16,40 @@ class RepairRequestCreate(BaseModel):
 	description: str
 	city_id: int
 
-	# @validator("phone")
-	# def validate_phone(cls, value):
-	# 	try:
-	# 		parsed = phonenumbers.parse(value, "RU")
-	# 		if not phonenumbers.is_valid_number(parsed):
-	# 			raise ValueError()
-	# 	except Exception:
-	# 		raise ValueError("Некорректный номер телефона")
-	# 	return value
+
+
+# @validator("phone")
+# def validate_phone(cls, value):
+# 	try:
+# 		parsed = phonenumbers.parse(value, "RU")
+# 		if not phonenumbers.is_valid_number(parsed):
+# 			raise ValueError()
+# 	except Exception:
+# 		raise ValueError("Некорректный номер телефона")
+# 	return value
 
 
 class RepairRequestTelegram(BaseModel):
-	product_id: str
-	service_id: str
 	name: str
 	phone: str
 	city_id: int
+	category_id: str
+	product_id: str
+	service_id: str
 	description: str
 	duration: str
-	price: Optional[int] = None
-	category_id: str
+	price: int
 
-	# @validator("phone")
-	# def validate_phone(cls, value):
-	# 	try:
-	# 		parsed = phonenumbers.parse(value, "RU")
-	# 		if not phonenumbers.is_valid_number(parsed):
-	# 			raise ValueError()
-	# 	except Exception:
-	# 		raise ValueError("Некорректный номер телефона")
-	# 	return value
+
+# @validator("phone")
+# def validate_phone(cls, value):
+# 	try:
+# 		parsed = phonenumbers.parse(value, "RU")
+# 		if not phonenumbers.is_valid_number(parsed):
+# 			raise ValueError()
+# 	except Exception:
+# 		raise ValueError("Некорректный номер телефона")
+# 	return value
 
 
 class RepairRequestBase(BaseModel):
@@ -68,16 +75,19 @@ class RepairRequestUpdate(BaseModel):
 # 	city_id: int
 
 class ServiceCreate(BaseModel):
-    model: str
-    url: str
-    name: str
-    price: Optional[int] = None
-    description: str
-class ServiceOut(ServiceCreate):
-    id: int
+	model: str
+	url: str
+	name: str
+	price: Optional[int] = None
+	description: str
 
-    class Config:
-        orm_mode = True
+
+class ServiceOut(ServiceCreate):
+	id: int
+
+	class Config:
+		from_attributes = True
+
 
 class AdminCreate(BaseModel):
 	username: str
@@ -99,7 +109,7 @@ class RepairRequestOut(BaseModel):
 
 
 class Config:
-	orm_mode = True
+	from_attributes = True
 
 
 # orm_mode = ConfigDict(from_attributes=True)
@@ -223,6 +233,26 @@ class RepairServiceCreate(BaseModel):
 	duration: str
 
 
+class RepairService(BaseModel):
+	id: str
+	title: str
+	description: str
+	price: Dict[CityCode, int]
+	duration: str
+	warranty: str
+	categoryId: str
+
+
+class Product(BaseModel):
+	id: str
+	title: str
+	slug: str
+	categoryId: str
+	description: str
+	image: str
+	repairServices: List[RepairService]
+
+
 class ProductBase(BaseModel):
 	id: str
 	title: str
@@ -317,3 +347,36 @@ class RepairServicePatch(BaseModel):
 	product_id: Optional[str]
 	category_id: Optional[str]
 	city_id: Optional[int]
+
+
+class FeedbackBase(BaseModel):
+	city_id: int
+	phone: str
+	description: str
+
+
+class FeedbackCreate(FeedbackBase):
+	pass
+
+
+class FeedbackBase(BaseModel):
+    city_id: int
+    phone: str
+    description: str
+
+class FeedbackCreate(FeedbackBase):
+    pass
+
+class FeedbackRead(FeedbackBase):
+    id: int
+    code: str
+    city: str
+
+    model_config = {
+        "from_attributes": True
+    }
+
+    @validator("city", pre=True, always=True)
+    def get_city_name(cls, v, values):
+        # v — это объект City, если вы делаете .from_orm
+        return v.name if hasattr(v, "name") else v

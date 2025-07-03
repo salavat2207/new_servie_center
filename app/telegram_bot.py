@@ -1,7 +1,16 @@
 import logging
 import os
 from dotenv import load_dotenv
-
+import json
+import httpx
+from app.database import SessionLocal
+from app.models import Master, RepairRequest, City
+import requests
+from dotenv import load_dotenv
+import os
+from sqlalchemy import event
+from datetime import datetime
+from fastapi import FastAPI, Request
 load_dotenv()
 
 
@@ -11,21 +20,27 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s"
 )
 
-import json
-from app.database import SessionLocal
-from app.models import Master, RepairRequest, City
-import requests
-from dotenv import load_dotenv
-import os
-from sqlalchemy import event
-from datetime import datetime
-from fastapi import FastAPI, Request
 
-load_dotenv()
 
 BOT_TOKEN = os.getenv('BOT_TOKEN')
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
 
 app = FastAPI()
+async def send_telegram_message_async(message: str):
+	url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+	payload = {
+		"chat_id": TELEGRAM_CHAT_ID,
+		"text": message,
+		"parse_mode": "HTML"
+	}
+	try:
+		async with httpx.AsyncClient() as client:
+			response = await client.post(url, json=payload)
+			response.raise_for_status()  # чтобы отлавливать ошибки Telegram API
+	except httpx.HTTPError as e:
+		print("Ошибка отправки в Telegram:", e)
+
 
 def notify_city_masters(city_id, requests_data):
     db = SessionLocal()
@@ -220,8 +235,3 @@ def generate_request_data(mapper, connect, target):
 
 if __name__ == "__main__":
     start_polling()
-
-
-
-
-

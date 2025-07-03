@@ -9,13 +9,20 @@ from app.database import create_db_and_tables
 from app.telegram_bot import start_polling
 import threading
 import logging
+from fastapi import FastAPI
+from typing import List
+from .schemas import Product
+from app.database import Base, engine
+
 
 app = FastAPI()
 
 origins = [
-    "http://localhost:8000",
-    "http://localhost:5173",
-    "http://185.177.216.134:5173",
+  "http://localhost:8000",
+  "http://localhost:5173",
+  "http://185.177.216.134:5173",
+  "http://xn----7sbfcggdzf6eibe.xn--p1ai",
+  "https://xn----7sbfcggdzf6ejbe.xn--p1ai",
 ]
 
 app.add_middleware(
@@ -90,6 +97,50 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("🛑 FastAPI остановлен")
+
+
+
+
+
+
+
+# Пример заглушки, позже можно заменить на загрузку из БД
+@app.get("/products", response_model=List[Product])
+def get_products():
+    return [
+        {
+            "id": "iphone-16-pro-max",
+            "title": "iPhone 16 Pro Max",
+            "slug": "16-pro-max",
+            "categoryId": "apple-iphone",
+            "description": "Ремонт iPhone 16 Pro Max: замена дисплея, аккумулятора и другие услуги.",
+            "image": "/src/assets/apple/iphone/16promax.jpg",
+            "repairServices": [
+                {
+                    "id": "iphone-16-pro-max-screen-repair",
+                    "title": "Замена дисплея",
+                    "description": "Оригинальный дисплей iPhone 16 Pro Max",
+                    "price": {
+                        "CHE": 8990,
+                        "MGN": 9990,
+                        "EKB": 9490
+                    },
+                    "duration": "1-2 часа",
+                    "warranty": "6 месяцев",
+                    "categoryId": "apple-iphone"
+                }
+            ]
+        }
+    ]
+
+
+
+
+
+
+
+
+
 
 if __name__ == "__main__":
     import uvicorn

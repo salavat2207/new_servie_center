@@ -1,16 +1,7 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
-from app.models import RepairRequest, RepairService, City
+from app.models import RepairRequest, RepairService, City, Feedback
 from app.schemas import RepairRequestCreate, RepairRequestTelegram
-
-
-# def create_request(db: Session, request: schemas.RepairRequestCreate):
-# 	new_request = models.RepairRequest(**request.model_dump())
-# 	db.add(new_request)
-# 	db.commit()
-# 	db.refresh(new_request)
-# 	return new_request
-
 
 
 def create_request(db: Session, request_data: schemas.RepairRequestCreate):
@@ -20,6 +11,10 @@ def create_request(db: Session, request_data: schemas.RepairRequestCreate):
     db.refresh(db_request)
     db_request.city = db.query(City).filter(City.id == db_request.city_id).first()
     return db_request
+
+
+
+
 
 
 def create_admin(db: Session, admin: schemas.AdminCreate):
