@@ -7,18 +7,9 @@ import os
 
 from uuid import uuid4
 
-from app import schemas, crud
 from app.database import get_db
-from app.models import Product, ProductPrice, User, Admin, RepairService, City, RepairPrice
-from app.routers.auth import get_current_user
-from app.schemas import ProductCreate, ProductPriceCreate, ProductPriceSchema, AdminLoginSchema, ProductCreateSchema, \
-    RepairServicePatch, ProductPriceOut
-from app.auth import verify_password, create_access_token, get_current_admin, get_password_hash, get_current_admin_user
-from app.database import SessionLocal, Base, engine
-from app.models import User
-from app.auth import get_password_hash
-from app.schemas import ProductUpdate
-from typing import Optional, List
+from app.models import Admin, RepairService, City
+
 
 
 UPLOAD_DIR = "static/uploads"
@@ -169,12 +160,12 @@ def get_services(city_code: str = Query(...), db: Session = Depends(get_db)):
 #
 # @router.post("/admin/create")
 # def create_admin():
-#     # Создаём таблицы, если их ещё нет
+#     """Создание админа"""
 #     Base.metadata.create_all(bind=engine)
 #
 #     db = SessionLocal()
-#     username = input("Введите имя суперадмина: ").strip()
-#     password = input("Введите пароль суперадмина: ").strip()
+#     username = input("Введите имя админа: ").strip()
+#     password = input("Введите пароль админа: ").strip()
 #
 #     existing_user = db.query(User).filter_by(username=username).first()
 #     if existing_user:
@@ -185,7 +176,7 @@ def get_services(city_code: str = Query(...), db: Session = Depends(get_db)):
 #     admin = Admin(username=username, password=hashed_password, is_superadmin=True)
 #     db.add(admin)
 #     db.commit()
-#     print("✅ Суперадмин успешно создан.")
+#     print("✅ Админ успешно создан.")
 #
 #
 # if __name__ == "__main__":
@@ -194,13 +185,13 @@ def get_services(city_code: str = Query(...), db: Session = Depends(get_db)):
 
 
 
-"""
-Авторизация
-"""
 
 
 @router.post("/admin/login")
 def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    Авторизация
+    """
     admin = db.query(Admin).filter_by(username=form_data.username, is_superadmin=True).first()
     if not admin or not verify_password(form_data.password, admin.password):
         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
@@ -581,16 +572,26 @@ from app.database import get_db
 from app.utils import upload_image
 import uuid
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+
+from fastapi.security import OAuth2PasswordRequestForm
+from app.auth import (
+    verify_password,
+    create_access_token,
+    get_current_admin
+)
+
+
+
+router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(get_current_admin)])
 UPLOAD_DIR = "static/images"
 
 # Products
-@router.get("/products", response_model=List[schemas.ProductOut])
+@router.get("/products", response_model=List[schemas.ProductOut], dependencies=[Depends(get_current_admin)])
 def list_products(db: Session = Depends(get_db)):
     """Получить список продуктов"""
     return db.query(models.Product).all()
 
-@router.post("/products", response_model=schemas.ProductOut, status_code=status.HTTP_201_CREATED)
+@router.post("/products", response_model=schemas.ProductOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_admin)])
 def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)):
     """Добавление продуктов"""
     db_product = models.Product(**payload.dict())
@@ -599,7 +600,7 @@ def create_product(payload: schemas.ProductCreate, db: Session = Depends(get_db)
     db.refresh(db_product)
     return db_product
 
-@router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_admin)])
 def delete_product(product_id: str, db: Session = Depends(get_db)):
     """Удаление продуктов"""
     prod = db.get(models.Product, product_id)
@@ -608,7 +609,7 @@ def delete_product(product_id: str, db: Session = Depends(get_db)):
     db.delete(prod)
     db.commit()
 
-@router.patch("/products/{product_id}", response_model=schemas.ProductOut)
+@router.patch("/products/{product_id}", response_model=schemas.ProductOut, dependencies=[Depends(get_current_admin)])
 def update_product(product_id: str, payload: schemas.ProductUpdate, db: Session = Depends(get_db)):
     """Обновление продуктов"""
     prod = db.get(models.Product, product_id)
@@ -621,12 +622,12 @@ def update_product(product_id: str, payload: schemas.ProductUpdate, db: Session 
     return prod
 
 # Services
-@router.get("/services", response_model=List[schemas.ServiceOut])
+@router.get("/services", response_model=List[schemas.ServiceOut], dependencies=[Depends(get_current_admin)])
 def list_services(db: Session = Depends(get_db)):
     """Получить список услуг"""
     return db.query(models.RepairService).options(joinedload(models.RepairService.product)).all()
 
-@router.post("/products/{product_id}/services", response_model=schemas.ServiceOut, status_code=status.HTTP_201_CREATED)
+@router.post("/products/{product_id}/services", response_model=schemas.ServiceOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_admin)])
 def add_service_to_product(
     product_id: str,
     payload: schemas.ServiceCreate,
@@ -653,7 +654,7 @@ def add_service_to_product(
     return srv
 
 
-@router.patch("/admin/services/{service_id}/description", response_model=schemas.ServiceOut)
+@router.patch("/admin/services/{service_id}/description", response_model=schemas.ServiceOut, dependencies=[Depends(get_current_admin)])
 def update_service_description(
     service_id: str = Path(..., description="ID услуги"),
     description: str = Query(..., description="Новое описание"),
@@ -671,7 +672,7 @@ def update_service_description(
     return service
 
 
-@router.delete("/products/{product_id}/services/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/products/{product_id}/services/{service_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_admin)])
 def remove_service(product_id: str, service_id: str, db: Session = Depends(get_db)):
     """Удаление услуг"""
     srv = db.query(models.RepairService).filter_by(id=service_id, product_id=product_id).first()
@@ -680,7 +681,7 @@ def remove_service(product_id: str, service_id: str, db: Session = Depends(get_d
     db.delete(srv)
     db.commit()
 
-@router.patch("/services/{service_id}", response_model=schemas.ServiceOut)
+@router.patch("/services/{service_id}", response_model=schemas.ServiceOut, dependencies=[Depends(get_current_admin)])
 def update_service(service_id: str, payload: schemas.ServiceCreate, db: Session = Depends(get_db)):
     """Изменение услуг"""
     srv = db.get(models.RepairService, service_id)
@@ -693,7 +694,7 @@ def update_service(service_id: str, payload: schemas.ServiceCreate, db: Session 
     return srv
 
 
-@router.patch("/services/{service_id}/price", response_model=schemas.ServiceOut, operation_id="update_service_price_custom")
+@router.patch("/services/{service_id}/price", response_model=schemas.ServiceOut, operation_id="update_service_price_custom", dependencies=[Depends(get_current_admin)])
 def update_service_price(
     service_id: str,
     city_code: str,
@@ -720,7 +721,7 @@ def update_service_price(
 
 
 
-@router.patch("/services/{service_id}/price", response_model=schemas.ServiceOut)
+@router.patch("/services/{service_id}/price", response_model=schemas.ServiceOut, dependencies=[Depends(get_current_admin)])
 def update_service_price(service_id: str, city_code: str, new_price: int, db: Session = Depends(get_db)):
     """Изменение цен"""
     sp = db.query(models.ServicePrice).filter_by(service_id=service_id, city_code=city_code).first()
@@ -737,14 +738,14 @@ def update_service_price(service_id: str, city_code: str, new_price: int, db: Se
     return service
 
 # Categories
-@router.get("/categories", response_model=List[schemas.CategoryOut])
+@router.get("/categories", response_model=List[schemas.CategoryOut], dependencies=[Depends(get_current_admin)])
 def list_categories(with_products: bool = False, db: Session = Depends(get_db)):
     """Получить список категорий"""
     if with_products:
         return db.query(models.Category).options(joinedload(models.Category.products)).all()
     return db.query(models.Category).all()
 
-@router.post("/categories", response_model=schemas.CategoryOut, status_code=status.HTTP_201_CREATED)
+@router.post("/categories", response_model=schemas.CategoryOut, status_code=status.HTTP_201_CREATED, dependencies=[Depends(get_current_admin)])
 def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_db)):
     """Добавление категорий"""
     cat = models.Category(**payload.dict())
@@ -753,7 +754,7 @@ def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_d
     db.refresh(cat)
     return cat
 
-@router.patch("/categories/{category_id}", response_model=schemas.CategoryOut)
+@router.patch("/categories/{category_id}", response_model=schemas.CategoryOut, dependencies=[Depends(get_current_admin)])
 def update_category(category_id: str, payload: schemas.CategoryUpdate, db: Session = Depends(get_db)):
     """Изменение категорий"""
     cat = db.get(models.Category, category_id)
@@ -765,7 +766,7 @@ def update_category(category_id: str, payload: schemas.CategoryUpdate, db: Sessi
     db.refresh(cat)
     return cat
 
-@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/categories/{category_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(get_current_admin)])
 def delete_category(category_id: str, db: Session = Depends(get_db)):
     """Удааление услуг"""
     cat = db.get(models.Category, category_id)
@@ -775,7 +776,7 @@ def delete_category(category_id: str, db: Session = Depends(get_db)):
     db.commit()
 
 
-@router.post("/upload-image")
+@router.post("/upload-image", dependencies=[Depends(get_current_admin)])
 def upload_image(file: UploadFile = File(...)):
     ext = file.filename.split(".")[-1]
     filename = f"{uuid4()}.{ext}"
@@ -786,3 +787,16 @@ def upload_image(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     return {"url": f"/{path}"}
+
+
+
+
+
+
+@router.post("/login")
+def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    admin = db.query(Admin).filter_by(username=form_data.username).first()
+    if not admin or not verify_password(form_data.password, admin.password):
+        raise HTTPException(status_code=401, detail="Неверный логин или пароль")
+    token = create_access_token({"sub": admin.username})
+    return {"access_token": token, "token_type": "bearer"}
