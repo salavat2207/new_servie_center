@@ -156,7 +156,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app import crud, schemas
-from app.models import Application, City, RepairRequest, Product, RepairService
+from app.models import Application, City, RepairRequest, Product, RepairService, User, Master
 from app.schemas import RepairRequestTelegram
 from app.telegram_bot import notify_city_masters, send_telegram_message_async
 
@@ -177,7 +177,6 @@ def get_db():
 
 
 def _notify_in_thread(city_id, req):
-    # просто синхронно уведомляем мастеров
     notify_city_masters(city_id, req)
 
 @router.post('/feedback')
@@ -191,8 +190,110 @@ async def submit_request(request: schemas.RepairRequestCreate,
     ).start()
     return {'detail': 'Ваша заявка принята, ожидайте звонка от мастера'}
 
+#
+# @router.post('/api/requests')
+# async def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+#     if request.city_id not in city_cache:
+#         city = db.query(City).get(request.city_id)
+#         if city:
+#             city_cache[request.city_id] = city
+#         else:
+#             raise HTTPException(status_code=404, detail="Город не найден")
+#
+#     product = db.query(Product).get(request.product_id)
+#     service = db.query(RepairService).filter(
+#         RepairService.product_id == request.product_id,
+#         RepairService.id == request.service_id
+#     ).first()
+#
+#     if not product or not service:
+#         raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
+#
+#     app = Application(
+#         phone=request.phone,
+#         description=request.description,
+#         city_id=request.city_id,
+#         name=request.name,
+#         code=str(uuid4())[:8],
+#         status="Новая заявка"
+#     )
+#     db.add(app)
+#     db.commit()
+#     db.refresh(app)
+#
+#     message = (
+#         f"🛠 <b>Заявка на ремонт</b>\n"
+#         f"📱 <b>Модель:</b> {product.name}\n"
+#         f"🔧 <b>Услуга:</b> {service.title}\n"
+#         f"📝 <b>Описание услуги:</b> {service.description}\n"
+#         f"🙍‍♂️ <b>Имя:</b> {app.name}\n"
+#         f"📞 <b>Телефон:</b> {app.phone}"
+#     )
+#
+#
+#
+#
+#
+#     masters = db.query(Master).filter_by(city_id=request.city_id).all()
+#     for master in masters:
+#         await asyncio.create_task(send_telegram_message_async(message, chat_id=master.telegram_id))
+#
+#     return {"message": "Заявка успешно отправлена"}
+
+
+
+#
+# @router.post('/requests')
+# async def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+#     if request.city_id not in city_cache:
+#         city = db.query(City).get(request.city_id)
+#         if city:
+#             city_cache[request.city_id] = city
+#         else:
+#             raise HTTPException(status_code=404, detail="Город не найден")
+#
+#     product = db.query(Product).get(request.product_id)
+#     service = db.query(RepairService).filter(
+#         RepairService.product_id == request.product_id,
+#         RepairService.id == request.service_id
+#     ).first()
+#     if not product or not service:
+#         raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
+#
+#     app = Application(
+#         phone=request.phone,
+#         description=request.description,
+#         city_id=request.city_id,
+#         name=request.name,
+#         code=str(uuid4())[:8],
+#         status="Новая заявка"
+#     )
+#     db.add(app)
+#     db.commit()
+#     db.refresh(app)
+#
+#     message = (
+#         f"🛠 <b>Заявка на ремонт</b>\n"
+#         f"📱 <b>Модель:</b> {product.name}\n"
+#         f"🔧 <b>Услуга:</b> {service.title}\n"
+#         f"📝 <b>Описание услуги:</b> {service.description}\n"
+#         f"🙍‍♂️ <b>Имя:</b> {app.name}\n"
+#         f"📞 <b>Телефон:</b> {app.phone}"
+#     )
+#
+#     # Рассылка мастерам
+#     masters = db.query(Master).filter_by(city_id=request.city_id).all()
+#     for master in masters:
+#         if master.telegram_id:
+#             await send_telegram_message_async(message, chat_id=master.telegram_id)
+#
+#     return {"message": "Заявка успешно отправлена"}
+
+
+
 @router.post('/requests')
-def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+async def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+    # Проверка города
     if request.city_id not in city_cache:
         city = db.query(City).get(request.city_id)
         if city:
@@ -200,6 +301,7 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
         else:
             raise HTTPException(status_code=404, detail="Город не найден")
 
+    # Проверка продукта и услуги
     product = db.query(Product).get(request.product_id)
     service = db.query(RepairService).filter(
         RepairService.product_id == request.product_id,
@@ -208,7 +310,7 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
     if not product or not service:
         raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
 
-    # Создаём заявку
+    # Создание заявки
     app = Application(
         phone=request.phone,
         description=request.description,
@@ -221,17 +323,20 @@ def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(ge
     db.commit()
     db.refresh(app)
 
+    # Сообщение
     message = (
         f"🛠 <b>Заявка на ремонт</b>\n"
         f"📱 <b>Модель:</b> {product.name}\n"
         f"🔧 <b>Услуга:</b> {service.title}\n"
         f"📝 <b>Описание услуги:</b> {service.description}\n"
-        f"🙍‍♂️ <b>Имя / Неисправность:</b> {app.name}\n"
+        f"🙍‍♂️ <b>Имя:</b> {app.name}\n"
         f"📞 <b>Телефон:</b> {app.phone}"
     )
-    asyncio.create_task(send_telegram_message_async(message))
-    return {"message": "Заявка успешно отправлена"}
 
-@router.get('/requests')
-def list_requests(db: Session = Depends(get_db)):
-    return db.query(RepairRequest).all()
+    # Мастера по нужному городу
+    masters = db.query(Master).filter_by(city_id=request.city_id).all()
+    for master in masters:
+        if master.telegram_id:
+            await TelegramBotService.send_message(chat_id=master.telegram_id, text=message)
+
+    return {"message": "Заявка успешно отправлена"}

@@ -17,7 +17,6 @@ class RepairRequestCreate(BaseModel):
 	city_id: int
 
 
-
 # @validator("phone")
 # def validate_phone(cls, value):
 # 	try:
@@ -57,12 +56,12 @@ class RepairRequestBase(BaseModel):
 	# phone: str
 	description: str
 	city_id: int
-	# status: str
-	# created_at: datetime
+# status: str
+# created_at: datetime
 
-	model_config = {
-		"from_attributes": True
-	}
+
+	class Config:
+		orm_mode = True
 
 
 class RepairRequestUpdate(BaseModel):
@@ -75,18 +74,19 @@ class RepairRequestUpdate(BaseModel):
 # 	city_id: int
 
 class ServiceCreate(BaseModel):
-	model: str
-	url: str
+	model: Optional[str] = None
+	# url: str
 	name: str
 	price: Optional[int] = None
 	description: str
 
 
 class ServiceOut(ServiceCreate):
-	id: int
+	id: str
+
 
 	class Config:
-		from_attributes = True
+		orm_mode = True
 
 
 class AdminCreate(BaseModel):
@@ -103,13 +103,12 @@ class RepairRequestOut(BaseModel):
 	status: Optional[str] = None
 	accepted_at: Optional[datetime] = None
 
-	model_config = {
-		"from_attributes": True
-	}
+
+	class Config:
+		orm_mode = True
 
 
-class Config:
-	from_attributes = True
+
 
 
 # orm_mode = ConfigDict(from_attributes=True)
@@ -147,9 +146,9 @@ class MasterOut(BaseModel):
 	telegram_id: int
 	city_id: int
 
-	model_config = {
-		"from_attributes": True
-	}
+
+	class Config:
+		orm_mode = True
 
 
 class ApplicationBase(BaseModel):
@@ -170,9 +169,9 @@ class ApplicationOut(ApplicationBase):
 	id: int
 	code: str
 
-	model_config = {
-		"from_attributes": True
-	}
+
+	class Config:
+		orm_mode = True
 
 
 class ProductsCreate(BaseModel):
@@ -185,11 +184,11 @@ class ProductsCreate(BaseModel):
 
 
 class ProductUpdate(BaseModel):
-	id: Optional[int]
+	id: Optional[str]
 	title: Optional[str]
 	name: Optional[str]
 	link: Optional[str]
-	category_id: Optional[int]
+	category_id: Optional[str]
 	description: Optional[str]
 	image: Optional[str]
 
@@ -253,6 +252,28 @@ class Product(BaseModel):
 	repairServices: List[RepairService]
 
 
+class ProductOut(BaseModel):
+	id: str
+	name: str
+	title: Optional[str]
+	slug: Optional[str]
+	link: Optional[str]
+	category_id: Optional[int]
+	description: Optional[str]
+	image: Optional[str]
+	city_id: Optional[int]
+	price: Optional[int]
+	duration: Optional[str]
+	category_id: Optional[str] = None
+	city_id: Optional[int] = None
+	price: Optional[float] = None
+	duration: Optional[int] = None
+
+
+	class Config:
+		orm_mode = True
+
+
 class ProductBase(BaseModel):
 	id: str
 	title: str
@@ -278,6 +299,7 @@ class ProductCreate(BaseModel):
 	category_id: str
 	description: Optional[str]
 	image: Optional[str]
+	slug: Optional[str] = None
 
 
 class ProductPriceCreate(BaseModel):
@@ -290,6 +312,11 @@ class ProductPriceCreate(BaseModel):
 	description: str
 	duration: str
 	category_id: str
+	title: str
+	model: str
+	city_code: str
+	duration: str
+	warranty: str
 
 
 class ProductPriceSchema(BaseModel):
@@ -301,8 +328,7 @@ class ProductPriceSchema(BaseModel):
 class ProductPriceOut(BaseModel):
 	id: int
 	name: str
-	# product_id: str
-	price: Optional[int] = None
+	price: int
 	city_id: int
 	description: str
 	duration: str
@@ -314,9 +340,24 @@ class ProductPriceOut(BaseModel):
 		except (TypeError, ValueError):
 			raise ValueError(f"Invalid city_id value: {v}")
 
-	model_config = {
-		"from_attributes": True
-	}
+
+	class Config:
+		orm_mode = True
+
+
+class ProductWithPricesOut(BaseModel):
+	id: str
+	title: str
+	slug: str
+	categoryId: str
+	description: str
+	image: str
+	prices: List[ProductPriceOut]
+	city_code: Optional[str] = None
+
+
+	class Config:
+		orm_mode = True
 
 
 class ProductCreateSchema(BaseModel):
@@ -360,23 +401,95 @@ class FeedbackCreate(FeedbackBase):
 
 
 class FeedbackBase(BaseModel):
-    city_id: int
-    phone: str
-    description: str
+	city_id: int
+	phone: str
+	description: str
+
 
 class FeedbackCreate(FeedbackBase):
-    pass
+	pass
+
 
 class FeedbackRead(FeedbackBase):
-    id: int
-    code: str
-    city: str
+	id: int
+	code: str
+	city: str
 
-    model_config = {
-        "from_attributes": True
-    }
 
-    @validator("city", pre=True, always=True)
-    def get_city_name(cls, v, values):
-        # v — это объект City, если вы делаете .from_orm
-        return v.name if hasattr(v, "name") else v
+	class Config:
+		orm_mode = True
+
+	@validator("city", pre=True, always=True)
+	def get_city_name(cls, v, values):
+		# v — это объект City, если вы делаете .from_orm
+		return v.name if hasattr(v, "name") else v
+
+
+class CategoryBase(BaseModel):
+	name: str
+	brand: str
+
+
+class CategoryCreate(CategoryBase):
+	id: str  # обязательный
+	name: str
+	brand: str
+
+
+class CategoryOut(CategoryBase):
+	id: int
+
+
+	class Config:
+		orm_mode = True
+
+
+# ----------- Service -----------
+class ServiceBase(BaseModel):
+	name: str
+	description: Optional[str] = None
+	duration: Optional[str] = None  # в минутах
+
+
+class ServiceCreate(ServiceBase):
+	price: int
+	city_id: int
+
+
+class ServiceUpdate(BaseModel):
+	name: Optional[str] = None
+	description: Optional[str] = None
+	duration: Optional[int] = None
+	price: Optional[float] = None
+	city_id: Optional[int] = None
+
+
+class ServicePriceOut(BaseModel):
+	id: int
+	price: float
+
+
+	class Config:
+		orm_mode = True
+
+
+class CategoryBase(BaseModel):
+	name: str
+	brand: str
+
+
+class CategoryUpdate(BaseModel):
+	id: str
+	name: Optional[str] = None
+	brand: Optional[str] = None
+
+
+class CategoryOut(BaseModel):
+	id: str
+	name: Optional[str] = None
+	image: Optional[str] = None
+	brand: Optional[str] = None
+
+
+	class Config:
+		orm_mode = True

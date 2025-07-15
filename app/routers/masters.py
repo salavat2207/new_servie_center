@@ -25,6 +25,12 @@ def create_master(master: schemas.MasterCreate, db: Session = Depends(get_db)):
     return new_master
 
 
-# @router.get("/city/{city_id}", response_model=list[schemas.MasterOut])
-# def get_masters_by_city(city_id: int, db: Session = Depends(get_db)):
-#     return crud.get_masters_by_city(db, city_id)
+
+
+
+@router.get("/city/{city_id}", response_model=list[schemas.MasterOut])
+def get_masters_by_city(city_id: int, db: Session = Depends(get_db)):
+    """
+    Получить список мастеров по городу
+    """
+    return crud.get_masters_by_city(db, city_id)

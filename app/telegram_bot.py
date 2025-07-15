@@ -6,8 +6,6 @@ import httpx
 from app.database import SessionLocal
 from app.models import Master, RepairRequest, City
 import requests
-from dotenv import load_dotenv
-import os
 from sqlalchemy import event
 from datetime import datetime
 from fastapi import FastAPI, Request
@@ -36,7 +34,7 @@ async def send_telegram_message_async(message: str):
 	try:
 		async with httpx.AsyncClient() as client:
 			response = await client.post(url, json=payload)
-			response.raise_for_status()  # чтобы отлавливать ошибки Telegram API
+			response.raise_for_status()
 	except httpx.HTTPError as e:
 		print("Ошибка отправки в Telegram:", e)
 
@@ -45,7 +43,6 @@ def notify_city_masters(city_id, requests_data):
 	db = SessionLocal()
 	masters = db.query(Master).filter(Master.city_id == city_id).all()
 
-	# Формируем текст с номером заявки
 	text = (
 		f'🛠 Заявка: {requests_data.request_number}'
 		f'\n📱 Телефон: {requests_data.phone}'
@@ -79,6 +76,38 @@ def notify_city_masters(city_id, requests_data):
 
 	db.close()
 
+logger = logging.getLogger("telegram")
+logger.setLevel(logging.INFO)
+
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+
+if not logger.handlers:
+	logger.addHandler(console_handler)
+
+
+class TelegramBotService:
+	BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+	@classmethod
+	async def send_message(cls, chat_id: str, text: str, parse_mode: str = "HTML") -> None:
+		payload = {
+			"chat_id": chat_id,
+			"text": text,
+			"parse_mode": parse_mode
+		}
+
+		try:
+			async with httpx.AsyncClient() as client:
+				resp = await client.post(cls.BASE_URL, json=payload)
+				resp.raise_for_status()
+				logger.info(f"📤 Message sent to {chat_id}")
+		except httpx.HTTPError as e:
+			logger.error(f"❌ Failed to send message to {chat_id}: {e}")
+
 
 def handle_callback(callback):
 	chat_id = callback["message"]["chat"]["id"]
@@ -89,7 +118,7 @@ def handle_callback(callback):
 
 	if data.startswith("start_"):
 		req_id = int(data.split("_")[1])
-		req = db.query(RepairRequest).get(req_id)
+		req = db.get(RepairRequest, req_id)
 
 		if req:
 			logging.info(f"Текущий статус заявки {req_id}: {req.status}")
@@ -107,7 +136,6 @@ def handle_callback(callback):
 				req.accepted_by = str(chat_id)
 				db.commit()
 
-				# Сообщение о принятии в работу
 				work_msg = requests.post(
 					f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
 					json={
@@ -143,7 +171,7 @@ def handle_callback(callback):
 		parts = data.split("_")
 		req_id = int(parts[1])
 		work_message_id = int(parts[2]) if len(parts) > 2 else None
-		req = db.query(RepairRequest).get(req_id)
+		req = db.get(RepairRequest, req_id)
 
 		if req:
 			if str(chat_id) != str(req.accepted_by):

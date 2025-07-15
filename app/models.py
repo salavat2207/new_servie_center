@@ -4,8 +4,7 @@ from app.database import Base
 from sqlalchemy import DateTime
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
-
-
+from uuid import uuid4
 
 """
 Город сервисного центра
@@ -74,19 +73,30 @@ class RepairRequest(Base):
 class RepairService(Base):
     __tablename__ = "repair_services"
 
-    id = Column(Integer, primary_key=True)
-    city_id = Column(String)
-    product_id = Column(String, ForeignKey("products.id"))
-    model = Column(String)
+    id = Column(String, primary_key=True, nullable=False)
     title = Column(String)
     description = Column(Text)
-    duration = Column(String)
     warranty = Column(String)
+    duration = Column(String)
+    city_id = Column(String)
+    name = Column(String, nullable=False)
+    product_id = Column(String, ForeignKey("products.id"))
+    model = Column(String)
+    price = Column(Integer, nullable=True)
     category_id = Column(String)
 
     product = relationship("Product", back_populates="repair_services")
     prices = relationship("RepairPrice", back_populates="repair_service")
 
+
+
+
+class ServicePrice(Base):
+    __tablename__ = "service_prices"
+
+    service_id = Column(String, ForeignKey("repair_services.id"), primary_key=True)
+    city_code = Column(String, primary_key=True)
+    price = Column(Integer, nullable=False)
 
 
 
@@ -100,6 +110,7 @@ class RepairPrice(Base):
 
     repair_service = relationship("RepairService", back_populates="prices")
     repair_id = Column(String, ForeignKey("repair_services.id"), nullable=False)
+
 
 
 
@@ -213,14 +224,16 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     password = Column(String(128), nullable=False)
     is_superadmin = Column(Boolean, default=False)
-
+    city_id = Column(Integer, ForeignKey("cities.id"))
 
 class Category(Base):
     __tablename__ = 'categories'
-    id = Column(String, primary_key=True, index=True)
-    name = Column(String, unique=True, index=True)
+    id = Column(String, primary_key=True)
 
-    products = relationship("Product", back_populates="category")
+    name = Column(String, unique=True, index=True)
+    brand = Column(String, nullable=True)
+
+    # products = relationship("Product", back_populates="category")
 
 
 class Application(Base):
@@ -243,22 +256,21 @@ class Application(Base):
 """
 Старый рабочий код
 """
-# class Product(Base):
-#     __tablename__ = "products"
-#     id = Column(String, primary_key=True)
-#     name = Column(String, nullable=False)
-#     category = Column(String, nullable=False)
-#     title = Column(String, unique=True, index=True)
-#     link = Column(String, index=True)
-#     category_id = Column(Integer, ForeignKey("categories.id"))
-#     description = Column(String, nullable=True)
-#     image = Column(String)
-#     city_id = Column(Integer, ForeignKey("cities.id"))
-#
-#     # service_id = Column(Integer, ForeignKey("repair_services.id"))
-#
-#     repair_services = relationship("RepairService", back_populates="product")
-#     prices = relationship("ProductPrice", back_populates="product", passive_deletes=True)
+class Product(Base):
+    __tablename__ = "products"
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    category = Column(String, nullable=True)
+    title = Column(String, index=True)
+    link = Column(String, index=True)
+    category_id = Column(String, ForeignKey("categories.id"))
+    description = Column(String, nullable=True)
+    image = Column(String)
+    slug = Column(String, index=True)
+
+    repair_services = relationship("RepairService", back_populates="product")
+    prices = relationship("ProductPrice", back_populates="product", passive_deletes=True)
+
 
 
 
@@ -267,20 +279,20 @@ class Application(Base):
 """
 Новый код (тест)
 """
-
-class Product(Base):
-    __tablename__ = "products"
-
-    id = Column(String, primary_key=True)
-    title = Column(String)
-    slug = Column(String)
-    category_id = Column(String, ForeignKey("categories.id"))
-    description = Column(Text)
-    image = Column(String)
-
-    category = relationship("Category", back_populates="products")
-    repair_services = relationship("RepairService", back_populates="product")
-    prices = relationship("ProductPrice", back_populates="product")
+#
+# class Product(Base):
+#     __tablename__ = "products"
+#
+#     id = Column(String, primary_key=True)
+#     title = Column(String)
+#     slug = Column(String)
+#     category_id = Column(String, ForeignKey("categories.id"))
+#     description = Column(Text)
+#     image = Column(String)
+#
+#     category = relationship("Category", back_populates="products")
+#     repair_services = relationship("RepairService", back_populates="product")
+#     prices = relationship("ProductPrice", back_populates="product")
 
 
 
@@ -293,11 +305,16 @@ class ProductPrice(Base):
     __tablename__ = "product_prices"
     id = Column(Integer, primary_key=True, index=True)
     product_id = Column(String, ForeignKey("products.id", ondelete='CASCADE'), nullable=False)
-    city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
+    city_code = Column(String, ForeignKey("cities.id"), nullable=False)
     price = Column(Integer, nullable=False)
+    name = Column(String)
+
+    service_id = Column(String, ForeignKey("repair_services.id"))
 
     product = relationship("Product", back_populates="prices")
     city = relationship("City")
+    service = relationship("RepairService", backref="product_prices")
+
 
 
 
