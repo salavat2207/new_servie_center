@@ -47,25 +47,6 @@ class RepairRequest(Base):
 
     # product = relationship("Product", back_populates="requests")
 
-"""
-Старый рабочий код
-"""
-# class RepairService(Base):
-#     __tablename__ = "repair_services"
-#     id = Column(Integer, primary_key=True, autoincrement=True)
-#     city_id = Column(Integer, ForeignKey("cities.id"), nullable=False)
-#     service_id = Column(String)
-#     name = Column(String, nullable=False)
-#     description = Column(String, nullable=True)
-#     duration = Column(String, nullable=True)
-#     price = Column(Integer, nullable=True)
-#     category_id = Column(String, ForeignKey("categories.id"))
-#     product_id = Column(String, ForeignKey("products.id"))
-#     model = Column(String, nullable=True)
-#
-#     product = relationship("Product", back_populates="repair_services", foreign_keys=[product_id])
-#     prices = relationship("RepairServicePrice", back_populates="repair_service", cascade="all, delete-orphan")
-
 
 
 class RepairService(Base):
@@ -103,23 +84,6 @@ class RepairPrice(Base):
 
 
 
-# class RepairServicePrice(Base):
-#     __tablename__ = "repair_service_prices"
-#
-#     id = Column(Integer, primary_key=True)
-#     service_id = Column(Integer, ForeignKey("repair_services.id"), nullable=False)
-#     city_code = Column(String, nullable=False)  # Примеры: "CHE", "MGN", "EKB"
-#     price = Column(Integer, nullable=False)
-#
-#     repair_service = relationship("RepairService", back_populates="prices")
-
-
-# class Service(Base):
-# 	__tablename__ = 'services'
-# 	id = Column(Integer, primary_key=True)
-# 	name = Column(String)
-# 	price = Column(Integer)
-# 	city_id = Column(Integer, ForeignKey('cities.id'))
 
 
 class Service(Base):
@@ -133,23 +97,6 @@ class Service(Base):
     description = Column(Text)
     model = Column(String)
     city_id = Column(Integer, ForeignKey('cities.id'))
-
-"""
-Заявки на ремонт
-"""
-# class RepairRequest(Base):
-# 	__tablename__ = 'requests'
-# 	id = Column(Integer, primary_key=True)
-# 	name = Column(String)
-# 	phone = Column(Text)
-# 	description = Column(Text)
-# 	city_id = Column(Integer, ForeignKey('cities.id'))
-# 	status = Column(String, default='Новая заявка')
-
-
-"""
-Мастер
-"""
 
 
 class Master(Base):
@@ -165,8 +112,6 @@ class Master(Base):
 """
 Обратная связь
 """
-
-
 class Feedback(Base):
     __tablename__ = 'feedbacks'
     id = Column(Integer, primary_key=True, index=True)
@@ -183,18 +128,6 @@ class Feedback(Base):
     price = Column(Integer)
     city = relationship("City", back_populates="feedbacks")
 
-"""
-Админ
-"""
-
-
-# class Admin(Base):
-# 	__tablename__ = 'admin'
-# 	id = Column(Integer, primary_key=True, index=True)
-# 	name = Column(String, nullable=False)
-# 	phone = Column(String)
-# 	# telegram_id = Integer)
-# 	telegram_id = 908977119
 
 
 class Admin(Base):

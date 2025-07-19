@@ -3,10 +3,6 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 
-
-
-
-
 DATABASE_URL = 'sqlite:///./service_center.db'
 
 

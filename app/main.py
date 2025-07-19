@@ -49,20 +49,6 @@ app.add_middleware(
 
 
 
-# """
-# Добавить перед запуском
-# """
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=[
-#         "https://your-frontend-site.com",
-#         "http://localhost:8000"
-#     ],
-#     allow_credentials=True,
-#     allow_methods=["GET", "POST", "PUT", "DELETE"],
-#     allow_headers=["Authorization", "Content-Type"],
-# )
-
 """
 Старт ТГ Бота
 """

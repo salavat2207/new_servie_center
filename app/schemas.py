@@ -1,10 +1,8 @@
-from pydantic import BaseModel, ConfigDict, validator, constr
 from datetime import datetime
 from typing import Optional, Annotated, List, TypedDict, Literal
-import phonenumbers
+
 from pydantic import BaseModel, validator, Field
-from sqlalchemy import Column, Integer, ForeignKey
-from uuid import UUID, uuid4
+
 from typing import Dict, List, Literal
 
 CityCode = Literal['CHE', 'MGN', 'EKB']
@@ -24,15 +22,6 @@ class RepairRequestCreate(BaseModel):
     city_id: int
 
 
-# @validator("phone")
-# def validate_phone(cls, value):
-# 	try:
-# 		parsed = phonenumbers.parse(value, "RU")
-# 		if not phonenumbers.is_valid_number(parsed):
-# 			raise ValueError()
-# 	except Exception:
-# 		raise ValueError("Некорректный номер телефона")
-# 	return value
 
 
 class RepairRequestTelegram(BaseModel):
@@ -47,15 +36,6 @@ class RepairRequestTelegram(BaseModel):
     price: int
 
 
-# @validator("phone")
-# def validate_phone(cls, value):
-# 	try:
-# 		parsed = phonenumbers.parse(value, "RU")
-# 		if not phonenumbers.is_valid_number(parsed):
-# 			raise ValueError()
-# 	except Exception:
-# 		raise ValueError("Некорректный номер телефона")
-# 	return value
 
 
 class RepairRequestBase(BaseModel):
@@ -75,10 +55,6 @@ class RepairRequestUpdate(BaseModel):
     status: str
 
 
-# class ServiceCreate(BaseModel):
-# 	name: str
-# 	price: int
-# 	city_id: int
 
 class ServiceCreate(BaseModel):
     id: str
@@ -179,7 +155,7 @@ class ApplicationBase(BaseModel):
     city_id: int
 
 
-# code: str
+
 
 
 class ApplicationCreate(ApplicationBase):
@@ -241,9 +217,6 @@ class RepairRequestTelegram(BaseModel):
     price: Optional[int] = None
     category_id: str
 
-
-# class RepairServiceCreate(RepairServiceBase):
-#     product_id: str
 
 
 class RepairServiceRead(RepairServiceBase):
