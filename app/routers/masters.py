@@ -8,6 +8,7 @@ router = APIRouter(
     tags=["Мастера"]
 )
 
+
 @router.post("/Создание мастеров", response_model=schemas.MasterOut)
 def create_master(master: schemas.MasterCreate, db: Session = Depends(get_db)):
     existing_master = db.query(models.Master).filter_by(telegram_id=master.telegram_id).first()
@@ -25,6 +26,17 @@ def create_master(master: schemas.MasterCreate, db: Session = Depends(get_db)):
     return new_master
 
 
+
+@router.delete("/{telegram_id}", status_code=204)
+def delete_master_by_telegram_id(telegram_id: int, db: Session = Depends(get_db)):
+    """Удаление мастеров по Telegram ID"""
+    master = db.query(models.Master).filter_by(telegram_id=telegram_id).first()
+    if not master:
+        raise HTTPException(status_code=404, detail="Мастер с таким Telegram ID не найден")
+
+    db.delete(master)
+    db.commit()
+    return None
 
 
 

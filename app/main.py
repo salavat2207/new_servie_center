@@ -14,13 +14,28 @@ from typing import List
 from .schemas import Product
 
 
+
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from routers.requests import router as requests_router
+
+from middleware.proxy_headers import ProxyHeadersMiddleware
+
+
 app = FastAPI()
+
+app.add_middleware(ProxyHeadersMiddleware)
+
+
 
 origins = [
   "http://localhost:8000",
   "http://localhost:5173",
-  "http://185.177.216.134:5173",      # если фронт на 5173
-  "http://xn----7sbfcggdzf6eibe.xn--p1ai",  # продакшен-домен
+  "http://185.177.216.134:5173",
+  "http://xn----7sbfcggdzf6eibe.xn--p1ai",
   "https://xn----7sbfcggdzf6ejbe.xn--p1ai",
 ]
 
@@ -64,9 +79,9 @@ app.include_router(cities.router)
 # app.include_router(feedback.router)
 app.include_router(masters.router)
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
-app.include_router(requests.router, prefix="/requests", tags=["requests"])
+app.include_router(requests_router, prefix="/requests", tags=[""])
 app.include_router(products.router, prefix="/products", tags=["products"])
-app.include_router(services.router, prefix="/services", tags=["services"])
+# app.include_router(services.router, prefix="/services", tags=["services"])
 
 
 
@@ -101,38 +116,38 @@ async def shutdown_event():
 
 
 
-
+#
 
 # Пример заглушки, позже можно заменить на загрузку из БД
-@app.get("/products", response_model=List[Product])
-def get_products():
-    return [
-        {
-            "id": "iphone-16-pro-max",
-            "title": "iPhone 16 Pro Max",
-            "slug": "16-pro-max",
-            "categoryId": "apple-iphone",
-            "description": "Ремонт iPhone 16 Pro Max: замена дисплея, аккумулятора и другие услуги.",
-            "image": "/src/assets/apple/iphone/16promax.jpg",
-            "repairServices": [
-                {
-                    "id": "iphone-16-pro-max-screen-repair",
-                    "title": "Замена дисплея",
-                    "description": "Оригинальный дисплей iPhone 16 Pro Max",
-                    "price": {
-                        "CHE": 8990,
-                        "MGN": 9990,
-                        "EKB": 9490
-                    },
-                    "duration": "1-2 часа",
-                    "warranty": "6 месяцев",
-                    "categoryId": "apple-iphone"
-                }
-            ]
-        }
-    ]
-
-
+# @app.get("/products11", response_model=List[Product])
+# def get_products():
+#     return [
+#         {
+#             "id": "iphone-16-pro-max",
+#             "title": "iPhone 16 Pro Max",
+#             "slug": "16-pro-max",
+#             "categoryId": "apple-iphone",
+#             "description": "Ремонт iPhone 16 Pro Max: замена дисплея, аккумулятора и другие услуги.",
+#             "image": "/src/assets/apple/iphone/16promax.jpg",
+#             "repairServices": [
+#                 {
+#                     "id": "iphone-16-pro-max-screen-repair",
+#                     "title": "Замена дисплея",
+#                     "description": "Оригинальный дисплей iPhone 16 Pro Max",
+#                     "price": {
+#                         "CHE": 8990,
+#                         "MGN": 9990,
+#                         "EKB": 9490
+#                     },
+#                     "duration": "1-2 часа",
+#                     "warranty": "6 месяцев",
+#                     "categoryId": "apple-iphone"
+#                 }
+#             ]
+#         }
+#     ]
+#
+#
 
 
 

@@ -397,10 +397,10 @@ db: Session = SessionLocal()
 # === ДОБАВЛЕНИЕ КАТЕГОРИЙ ===
 unique_categories = {}
 for product in products_data:
-    cat_id = product["category_id"]
-    cat_name = product["category"]
-    if cat_id not in unique_categories:
-        unique_categories[cat_id] = cat_name
+    cat_id = product["categoryId"]
+    # cat_name = product["category"]
+    # if cat_id not in unique_categories:
+    #     unique_categories[cat_id] = cat_name
 
 for cat_id, cat_name in unique_categories.items():
     existing = db.query(Category).filter_by(id=cat_id).first()
@@ -415,12 +415,12 @@ for product_data in products_data:
 
     product = Product(
         id=product_data["id"],
-        name=product_data["name"],
+        # name=product_data["name"],
         title=product_data["title"],
         slug=product_data["slug"],
-        link=product_data["link"],
-        category=product_data["category"],
-        category_id=product_data["category_id"],
+        # link=product_data["link"],
+        # category=product_data["category"],
+        category_id=product_data["categoryId"],
         description=product_data["description"],
         image=product_data["image"]
     )
@@ -428,21 +428,21 @@ for product_data in products_data:
 
     for service in product_data["repairServices"]:
         repair_service = RepairService(
-            id=service["id"],
+            # id=service["id"],
             title=service["title"],
-            name=service["title"],
+            # name=service["title"],
             description=service["description"],
             warranty=service["warranty"],
             duration=service["duration"],
-            product_id=product.id,
-            model=product.name,
-            category_id=service["categoryId"],
+            # product_id=product.id,
+            # model=product.name,
+            # category_id=service["categoryId"],
         )
         db.add(repair_service)
 
         for city_code, price in service["price"].items():
             db.add(RepairPrice(
-                repair_id=repair_service.id,
+                repair_id=repair_service.title,
                 city_code=city_code,
                 price=price
             ))

@@ -5,7 +5,7 @@ from app.schemas import RepairRequestCreate, RepairRequestTelegram
 
 
 def create_request(db: Session, request_data: schemas.RepairRequestCreate):
-    db_request = RepairRequest(**request_data.model_dump())
+    db_request = RepairRequest(**request_data.dict())
     db.add(db_request)
     db.commit()
     db.refresh(db_request)

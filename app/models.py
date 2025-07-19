@@ -68,35 +68,23 @@ class RepairRequest(Base):
 
 
 
-# """Новый тестовый код"""
-
 class RepairService(Base):
     __tablename__ = "repair_services"
 
-    id = Column(String, primary_key=True, nullable=False)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    service_id = Column(String, index=True)
     title = Column(String)
     description = Column(Text)
-    warranty = Column(String)
     duration = Column(String)
-    city_id = Column(String)
-    name = Column(String, nullable=False)
+    warranty = Column(String)
+    # price = Column(Integer, nullable=True)
+
     product_id = Column(String, ForeignKey("products.id"))
-    model = Column(String)
-    price = Column(Integer, nullable=True)
-    category_id = Column(String)
 
     product = relationship("Product", back_populates="repair_services")
-    prices = relationship("RepairPrice", back_populates="repair_service")
+    prices = relationship("RepairPrice", back_populates="repair_service", cascade="all, delete-orphan", lazy="joined")
+    # repair_prices = relationship("RepairPrice", back_populates="repair_service")
 
-
-
-
-class ServicePrice(Base):
-    __tablename__ = "service_prices"
-
-    service_id = Column(String, ForeignKey("repair_services.id"), primary_key=True)
-    city_code = Column(String, primary_key=True)
-    price = Column(Integer, nullable=False)
 
 
 
@@ -104,13 +92,12 @@ class RepairPrice(Base):
     __tablename__ = "repair_prices"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    # repair_id = Column(String, ForeignKey("repair_services.id"))
-    city_code = Column(String)
-    price = Column(Integer)
+    repair_id = Column(Integer, ForeignKey("repair_services.id"), nullable=False)
+    city_code = Column(String, nullable=False)
+    price = Column(Integer, nullable=False)
 
+    # repair_service = relationship("RepairService", back_populates="repair_prices")
     repair_service = relationship("RepairService", back_populates="prices")
-    repair_id = Column(String, ForeignKey("repair_services.id"), nullable=False)
-
 
 
 
@@ -206,7 +193,7 @@ class Feedback(Base):
 # 	id = Column(Integer, primary_key=True, index=True)
 # 	name = Column(String, nullable=False)
 # 	phone = Column(String)
-# 	# telegram_id = Column(Integer)
+# 	# telegram_id = Integer)
 # 	telegram_id = 908977119
 
 
@@ -253,46 +240,24 @@ class Application(Base):
     city = relationship("City")
 
 
-"""
-Старый рабочий код
-"""
+
 class Product(Base):
     __tablename__ = "products"
-    id = Column(String, primary_key=True)
-    name = Column(String, nullable=False)
-    category = Column(String, nullable=True)
-    title = Column(String, index=True)
-    link = Column(String, index=True)
+    id = Column(String, primary_key=True, nullable=False)
+    # name = Column(String, primary_key=True, nullable=True)
     category_id = Column(String, ForeignKey("categories.id"))
+    title = Column(String, index=True)
+    # link = Column(String, index=True)
+    # product_id = Column(String, ForeignKey("products.id"))
     description = Column(String, nullable=True)
     image = Column(String)
     slug = Column(String, index=True)
 
-    repair_services = relationship("RepairService", back_populates="product")
+    repair_services = relationship("RepairService", back_populates="product", lazy="joined")
     prices = relationship("ProductPrice", back_populates="product", passive_deletes=True)
 
 
 
-
-
-
-"""
-Новый код (тест)
-"""
-#
-# class Product(Base):
-#     __tablename__ = "products"
-#
-#     id = Column(String, primary_key=True)
-#     title = Column(String)
-#     slug = Column(String)
-#     category_id = Column(String, ForeignKey("categories.id"))
-#     description = Column(Text)
-#     image = Column(String)
-#
-#     category = relationship("Category", back_populates="products")
-#     repair_services = relationship("RepairService", back_populates="product")
-#     prices = relationship("ProductPrice", back_populates="product")
 
 
 
@@ -309,19 +274,8 @@ class ProductPrice(Base):
     price = Column(Integer, nullable=False)
     name = Column(String)
 
-    service_id = Column(String, ForeignKey("repair_services.id"))
+    service_id = Column(Integer, ForeignKey("repair_services.id"))
 
     product = relationship("Product", back_populates="prices")
     city = relationship("City")
     service = relationship("RepairService", backref="product_prices")
-
-
-
-
-
-
-
-
-
-
-
