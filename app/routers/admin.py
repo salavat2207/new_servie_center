@@ -32,7 +32,7 @@ from app.auth import (
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-UPLOAD_DIR = "static/images"
+UPLOAD_DIR = "images"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="admin/login")
 
 
@@ -372,25 +372,23 @@ def add_service_to_product(
     )
 
 
-
 @router.patch("/services/{service_id}/price", response_model=schemas.ServiceOut)
 def update_service_price(
     service_id: str,
+    product_id: str,
     city_code: str,
     new_price: int,
     db: Session = Depends(get_db)
 ):
-    """Изменение цены на услугу для конкретного города"""
-    # 1. Найти услугу
+    """Изменение цены на услугу для конкретного продукта и города"""
     service = db.query(models.RepairService)\
         .options(joinedload(models.RepairService.prices))\
-        .filter_by(service_id=service_id)\
+        .filter_by(service_id=service_id, product_id=product_id)\
         .first()
 
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    # 2. Найти или создать запись цены по городу
     price_record = next((p for p in service.prices if p.city_code == city_code), None)
 
     if price_record:
@@ -398,6 +396,7 @@ def update_service_price(
     else:
         price_record = models.RepairPrice(
             repair_id=service.id,
+            product_id=product_id,
             city_code=city_code,
             price=new_price
         )
@@ -410,16 +409,15 @@ def update_service_price(
     for p in service.prices:
         prices_by_city[p.city_code] = p.price
 
-    # 4. Вернуть ответ
     return schemas.ServiceOut(
         service_id=service.service_id,
+        product_id=service.product_id,
         title=service.title,
         description=service.description,
         duration=service.duration,
         warranty=service.warranty,
         price=prices_by_city
     )
-
 
 
 
@@ -480,17 +478,121 @@ def delete_category(category_id: str, db: Session = Depends(get_db)):
     db.commit()
 
 
-@router.post("/upload-image")
-def upload_image(file: UploadFile = File(...)):
-    ext = file.filename.split(".")[-1]
-    filename = f"{uuid4()}.{ext}"
-    path = os.path.join(UPLOAD_DIR, filename)
+# @router.post("/upload-image")
+# def upload_image(file: UploadFile = File(...)):
+#     ext = file.filename.split(".")[-1]
+#     filename = f"{uuid4()}.{ext}"
+#     path = os.path.join(UPLOAD_DIR, filename)
+#
+#     os.makedirs(UPLOAD_DIR, exist_ok=True)
+#     with open(path, "wb") as buffer:
+#         shutil.copyfileobj(file.file, buffer)
+#
+#     return {"url": f"/{path}"}
 
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    with open(path, "wb") as buffer:
+
+
+@router.put("/categories/{category_id}/image")
+def update_category_image(
+    category_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Загрузка изображений для категорий"""
+    print("📦 Все категории:", [c.id for c in db.query(models.Category).all()])
+    print("🔍 Пришёл category_id:", category_id)
+    category = db.query(models.Category).filter_by(id=category_id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Категория не найдена")
+
+    filename = f"category_{category_id}_{file.filename}"
+    file_path = os.path.join("opt/images", filename)
+
+    with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    return {"url": f"/{path}"}
+    category.image = f"/opt/images/{filename}"
+    db.commit()
+    db.refresh(category)
+
+    return {"image": category.image}
+
+
+
+
+@router.delete("/categories/{category_id}/image")
+def delete_category_image(category_id: str, db: Session = Depends(get_db)):
+    """Удаление изображения категории"""
+    category = db.query(models.Category).filter_by(id=category_id).first()
+    if not category:
+        raise HTTPException(status_code=404, detail="Категория не найдена")
+
+    # Удаляем файл, если он есть
+    if category.image:
+        image_path = category.image.lstrip("/")
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+    # Очищаем поле image
+    category.image = None
+    db.commit()
+    db.refresh(category)
+
+    return {"message": "Изображение удалено"}
+
+
+
+@router.put("/products/{product_id}/image")
+def update_product_image(
+    product_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Загрузка изображений для продуктов"""
+    product = db.query(models.Product).filter_by(id=product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Продукт не найден")
+
+    filename = f"product_{product_id}_{file.filename}"
+    file_path = os.path.join("opt/images", filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    product.image = f"/opt/images/{filename}"
+    db.commit()
+    db.refresh(product)
+
+    return {"image": product.image}
+
+
+
+
+
+
+
+@router.delete("/products/{product_id}/image")
+def delete_product_image(product_id: str, db: Session = Depends(get_db)):
+    """Удаление изображения продукта"""
+    product = db.query(models.Product).filter_by(id=product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Продукт не найден")
+
+    if product.image:
+        image_path = product.image.lstrip("/")  # убираем / в начале пути
+        if os.path.exists(image_path):
+            os.remove(image_path)
+
+    product.image = None
+    db.commit()
+    db.refresh(product)
+
+    return {"message": "Изображение удалено"}
+
+
+
+
+
 
 
 
