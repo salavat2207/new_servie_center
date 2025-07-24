@@ -1,17 +1,15 @@
 from fastapi import HTTPException
-from fastapi import FastAPI, Depends
+from fastapi import Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 
 from app.auth import authenticate_user, create_access_token
-from app.routers import cities, requests, feedback, masters, admin, auth, products, services
+from app.routers import cities, requests, masters, admin, products, menu
 from app.database import create_db_and_tables
-from app.telegram_bot import start_polling
-import threading
 import logging
 from fastapi import FastAPI
-from typing import List
-from .schemas import Product
+
 
 
 
@@ -52,9 +50,9 @@ app.add_middleware(
 """
 Старт ТГ Бота
 """
-@app.on_event("startup")
-def start_bot():
-    threading.Thread(target=start_polling, daemon=True).start()
+# @app.on_event("startup")
+# def start_bot():
+#     threading.Thread(target=start_polling, daemon=True).start()
 
 
 
@@ -65,10 +63,11 @@ app.include_router(cities.router)
 # app.include_router(feedback.router)
 app.include_router(masters.router)
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
-app.include_router(requests_router, prefix="/requests", tags=[""])
+app.include_router(requests.router, prefix="", tags=[""])
 app.include_router(products.router, prefix="/products", tags=["products"])
 # app.include_router(services.router, prefix="/services", tags=["services"])
-
+app.include_router(menu.router, prefix="/menu", tags=["menu"])
+app.mount("/images", StaticFiles(directory="opt/images"), name="images")
 
 
 
