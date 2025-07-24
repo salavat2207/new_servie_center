@@ -12,7 +12,7 @@ from app.database import SessionLocal
 from app import crud, schemas
 from app.models import Application, City, RepairRequest, Product, RepairService, User, Master
 from app.schemas import RepairRequestTelegram
-from app.telegram_bot import notify_city_masters, send_telegram_message_async, TelegramBotService
+from app.telegram_bot import notify_city_masters, send_telegram_message_async
 
 router = APIRouter()
 
@@ -95,3 +95,7 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
             await TelegramBotService.send_message(chat_id=master.telegram_id, text=message)
 
     return {"message": "Заявка успешно отправлена"}
+
+
+
+
