@@ -377,6 +377,37 @@ class ProductCreateSchema(BaseModel):
     prices: List[ProductPriceSchema]
 
 
+
+class SubItems(BaseModel):
+    id: str
+    title: str
+    slug: str
+    image: Optional[str]
+    categoryId: str
+
+    class Config:
+        orm_mode = True
+
+
+
+
+class SubItem(BaseModel):
+    id: str
+    title: str
+    slug: str
+    image: str
+    categoryId: str
+
+
+class MenuItem(BaseModel):
+    title: str
+    slug: str
+    subitems: List[SubItems]
+
+    class Config:
+        orm_mode = True
+
+
 class AdminLoginSchema(BaseModel):
     username: str
     password: str
@@ -510,5 +541,5 @@ class ProductWithServicesResponse(BaseModel):
     slug: str
     categoryId: str
     description: str
-    image: str
+    image: Optional[str] = None
     repairServices: List[RepairServiceResponse]

@@ -8,8 +8,7 @@ import os
 from uuid import uuid4
 
 from app.database import get_db
-from app.models import Admin, RepairService, City
-
+from app.models import Admin, RepairService, City, Master, Application, Product
 
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Path
@@ -17,6 +16,8 @@ from sqlalchemy.orm import Session
 
 from app import schemas, models
 from app.database import get_db
+from app.routers.requests import city_cache
+from app.schemas import RepairRequestTelegram
 from app.utils import upload_image
 import uuid
 from sqlalchemy.orm import joinedload
@@ -381,14 +382,19 @@ def update_service_price(
     db: Session = Depends(get_db)
 ):
     """Изменение цены на услугу для конкретного продукта и города"""
+
+    # ✅ Ищем услугу по связке service_id + product_id
     service = db.query(models.RepairService)\
         .options(joinedload(models.RepairService.prices))\
-        .filter_by(service_id=service_id, product_id=product_id)\
-        .first()
+        .filter(
+            models.RepairService.service_id == service_id,
+            models.RepairService.product_id == product_id
+        ).first()
 
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
+    # ✅ Найти или создать цену по городу
     price_record = next((p for p in service.prices if p.city_code == city_code), None)
 
     if price_record:
@@ -405,6 +411,7 @@ def update_service_price(
     db.commit()
     db.refresh(service)
 
+    # Сбор цен по городам
     prices_by_city = {code: 0 for code in ['CHE', 'MGN', 'EKB']}
     for p in service.prices:
         prices_by_city[p.city_code] = p.price
@@ -418,6 +425,63 @@ def update_service_price(
         warranty=service.warranty,
         price=prices_by_city
     )
+
+
+
+
+
+
+@router.post('/')
+async def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
+    if request.city_id not in city_cache:
+        city = db.query(City).get(request.city_id)
+        if city:
+            city_cache[request.city_id] = city
+        else:
+            raise HTTPException(status_code=404, detail="Город не найден")
+
+    # Найти продукт
+    product = db.query(Product).filter(Product.id == request.product_id).first()
+
+    # ✅ Найти услугу по product_id и строковому service_id
+    service = db.query(RepairService).filter(
+        RepairService.product_id == request.product_id,
+        RepairService.service_id == request.service_id  # <-- исправлено!
+    ).first()
+
+    if not product or not service:
+        raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
+
+    # Создать заявку
+    app = Application(
+        phone=request.phone,
+        description=request.description,
+        city_id=request.city_id,
+        name=request.name,
+        code=str(uuid4())[:8],
+        status="Новая заявка"
+    )
+    db.add(app)
+    db.commit()
+    db.refresh(app)
+
+    # Подготовить сообщение
+    message = (
+        f"🛠 <b>Заявка на ремонт</b>\n"
+        f"📱 <b>Модель:</b> {product.title}\n"
+        f"🔧 <b>Услуга:</b> {service.title}\n"
+        f"📝 <b>Описание услуги:</b> {service.description}\n"
+        f"🙍‍♂️ <b>Имя:</b> {app.name}\n"
+        f"📞 <b>Телефон:</b> {app.phone}"
+    )
+
+    # Разослать мастерам
+    masters = db.query(Master).filter_by(city_id=request.city_id).all()
+    for master in masters:
+        if master.telegram_id:
+            await TelegramBotService.send_message(chat_id=master.telegram_id, text=message)
+
+    return {"message": "Заявка успешно отправлена"}
 
 
 

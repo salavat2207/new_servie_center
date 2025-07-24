@@ -146,10 +146,16 @@ class User(Base):
     is_superadmin = Column(Boolean, default=False)
     city_id = Column(Integer, ForeignKey("cities.id"))
 
+
+
+
+
+
+
 class Category(Base):
     __tablename__ = 'categories'
     id = Column(String, primary_key=True)
-
+    image = Column(String)
     name = Column(String, unique=True, index=True)
     brand = Column(String, nullable=True)
 

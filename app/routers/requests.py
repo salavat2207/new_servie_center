@@ -12,7 +12,7 @@ from app.database import SessionLocal
 from app import crud, schemas
 from app.models import Application, City, RepairRequest, Product, RepairService, User, Master
 from app.schemas import RepairRequestTelegram
-from app.telegram_bot import notify_city_masters, send_telegram_message_async
+from app.telegram_bot import notify_city_masters, send_telegram_message_async, TelegramBotService
 
 router = APIRouter()
 
@@ -33,7 +33,7 @@ def get_db():
 def _notify_in_thread(city_id, req):
     notify_city_masters(city_id, req)
 
-@router.post('/feedback')
+@router.post('/requests/feedback')
 async def submit_request(request: schemas.RepairRequestCreate,
                          db: Session = Depends(get_db)):
     new_request = crud.create_request(db, request)
@@ -48,7 +48,7 @@ async def submit_request(request: schemas.RepairRequestCreate,
 
 
 
-@router.post('/')
+@router.post('/api/requests')
 async def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
     if request.city_id not in city_cache:
         city = db.query(City).get(request.city_id)
@@ -58,13 +58,14 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
             raise HTTPException(status_code=404, detail="Город не найден")
 
     product = db.query(Product).filter(Product.id == request.product_id).first()
+
     service = db.query(RepairService).filter(
         RepairService.product_id == request.product_id,
-        RepairService.id == request.service_id
+        RepairService.service_id == request.service_id
     ).first()
+
     if not product or not service:
         raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
-
 
     app = Application(
         phone=request.phone,
@@ -78,16 +79,15 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
     db.commit()
     db.refresh(app)
 
-
     message = (
         f"🛠 <b>Заявка на ремонт</b>\n"
-        f"📱 <b>Модель:</b> {product.name}\n"
+        f"📱 <b>Модель:</b> {product.title}\n"
         f"🔧 <b>Услуга:</b> {service.title}\n"
         f"📝 <b>Описание услуги:</b> {service.description}\n"
+        f"💵 <b>Цена:</b> {service.price} руб.\n"
         f"🙍‍♂️ <b>Имя:</b> {app.name}\n"
         f"📞 <b>Телефон:</b> {app.phone}"
     )
-
 
     masters = db.query(Master).filter_by(city_id=request.city_id).all()
     for master in masters:

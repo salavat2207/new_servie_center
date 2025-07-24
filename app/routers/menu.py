@@ -1,0 +1,70 @@
+from typing import List, Dict
+from fastapi import Depends, HTTPException, status, APIRouter
+from sqlalchemy.orm import Session
+
+from app import schemas, models
+from app.database import get_db
+
+from sqlalchemy.orm import joinedload
+
+from app.models import Category
+from app.schemas import MenuItem, SubItem
+
+router = APIRouter()
+
+@router.get("/categories", response_model=List[schemas.CategoryOut])
+def list_categories(with_products: bool = False, db: Session = Depends(get_db)):
+    """Получить список категорий"""
+    if with_products:
+        return db.query(models.Category).options(joinedload(models.Category.products)).all()
+    return db.query(models.Category).all()
+
+@router.post("/categories", response_model=schemas.CategoryOut, status_code=status.HTTP_201_CREATED)
+def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_db)):
+    """Добавление категорий"""
+    cat = models.Category(**payload.dict())
+    db.add(cat)
+    db.commit()
+    db.refresh(cat)
+    return cat
+
+@router.patch("/categories/{category_id}", response_model=schemas.CategoryOut)
+def update_category(category_id: str, payload: schemas.CategoryUpdate, db: Session = Depends(get_db)):
+    """Изменение категорий"""
+    cat = db.get(models.Category, category_id)
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    for field, value in payload.dict(exclude_none=True).items():
+        setattr(cat, field, value)
+    db.commit()
+    db.refresh(cat)
+    return cat
+
+
+@router.get("/menu", response_model=List[MenuItem])
+def get_menu(db: Session = Depends(get_db)):
+    categories: List[Category] = db.query(Category).all()
+
+    menu_dict: Dict[str, List[Category]] = {}
+    for cat in categories:
+        if not cat.brand:
+            continue
+        if cat.brand not in menu_dict:
+            menu_dict[cat.brand] = []
+        menu_dict[cat.brand].append(cat)
+
+    menu: List[MenuItem] = []
+    for brand, cats in menu_dict.items():
+        sub_items = [
+            SubItem(
+                id=cat.id,
+                title=cat.name,
+                slug=cat.id.split("-")[-1],
+                image=cat.image,
+                categoryId=cat.id,
+            )
+            for cat in cats
+        ]
+        menu.append(MenuItem(title=brand, slug=brand.lower(), subItems=sub_items))
+
+    return menu

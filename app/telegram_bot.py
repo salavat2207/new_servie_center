@@ -12,7 +12,6 @@ load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# Логгирование
 logging.basicConfig(
 	filename="bot.log",
 	level=logging.INFO,
@@ -28,7 +27,6 @@ if not logger.handlers:
 	logger.addHandler(console_handler)
 
 
-# Async отправка в Telegram
 async def send_telegram_message_async(chat_id: str, message: str):
 	url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 	payload = {
@@ -45,7 +43,6 @@ async def send_telegram_message_async(chat_id: str, message: str):
 		logger.error(f"❌ Failed to send message to {chat_id}: {e}")
 
 
-# Рассылка всем мастерам по городу
 def notify_city_masters(city_id: int, request_data: RepairRequest):
 	db = SessionLocal()
 	masters = db.query(Master).filter(Master.city_id == city_id).all()
@@ -53,7 +50,7 @@ def notify_city_masters(city_id: int, request_data: RepairRequest):
 	text = (
 		f'🛠 Заявка: {request_data.request_number}\n'
 		f'📱 Телефон: {request_data.phone}\n'
-		f'📄 Модель/Неисправность: {request_data.description}\n'
+		f'📄 Имя/Неисправность: {request_data.description}\n'
 	)
 
 	for master in masters:
@@ -64,13 +61,12 @@ def notify_city_masters(city_id: int, request_data: RepairRequest):
 					f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
 					json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
 				)
-				logger.info(f"✅ Заявка отправлена мастеру {chat_id}")
+				# logger.info(f"✅ Заявка отправлена мастеру {chat_id}")
 			except Exception as e:
 				logger.error(f"❌ Ошибка отправки мастеру {chat_id}: {e}")
 	db.close()
 
 
-# Генерация номера заявки при создании
 @event.listens_for(RepairRequest, "before_insert")
 def generate_request_data(mapper, connect, target):
 	db = SessionLocal()
@@ -80,3 +76,32 @@ def generate_request_data(mapper, connect, target):
 	target.request_number = f"{city_code}-{count + 1:04d}"
 	target.accepted_at = datetime.utcnow()
 	db.close()
+
+
+logger = logging.getLogger("telegram")
+logger.setLevel(logging.INFO)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+if not logger.handlers:
+	logger.addHandler(console_handler)
+
+
+class TelegramBotService:
+	BASE_URL = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
+	@classmethod
+	async def send_message(cls, chat_id: str, text: str, parse_mode: str = "HTML") -> None:
+		payload = {
+			"chat_id": chat_id,
+			"text": text,
+			"parse_mode": parse_mode
+		}
+
+		try:
+			async with httpx.AsyncClient() as client:
+				resp = await client.post(cls.BASE_URL, json=payload)
+				resp.raise_for_status()
+				logger.info(f"📤 Message sent to {chat_id}")
+		except httpx.HTTPError as e:
+			logger.error(f"❌ Failed to send message to {chat_id}: {e}")
