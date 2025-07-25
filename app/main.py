@@ -67,14 +67,14 @@ app.include_router(requests.router, prefix="", tags=[""])
 app.include_router(products.router, prefix="/products", tags=["products"])
 # app.include_router(services.router, prefix="/services", tags=["services"])
 app.include_router(menu.router, prefix="/menu", tags=["menu"])
-app.mount("/images", StaticFiles(directory="opt/images"), name="images")
+app.mount("/images", StaticFiles(directory="images"), name="images")
 
 
 
 
-@app.on_event('startup')
-def startup_event():
-    create_db_and_tables()
+# @app.on_event('startup')
+# def startup_event():
+#     create_db_and_tables()
 
 
 """
@@ -101,49 +101,9 @@ async def shutdown_event():
 
 
 
-#
-
-# Пример заглушки, позже можно заменить на загрузку из БД
-# @app.get("/products11", response_model=List[Product])
-# def get_products():
-#     return [
-#         {
-#             "id": "iphone-16-pro-max",
-#             "title": "iPhone 16 Pro Max",
-#             "slug": "16-pro-max",
-#             "categoryId": "apple-iphone",
-#             "description": "Ремонт iPhone 16 Pro Max: замена дисплея, аккумулятора и другие услуги.",
-#             "image": "/src/assets/apple/iphone/16promax.jpg",
-#             "repairServices": [
-#                 {
-#                     "id": "iphone-16-pro-max-screen-repair",
-#                     "title": "Замена дисплея",
-#                     "description": "Оригинальный дисплей iPhone 16 Pro Max",
-#                     "price": {
-#                         "CHE": 8990,
-#                         "MGN": 9990,
-#                         "EKB": 9490
-#                     },
-#                     "duration": "1-2 часа",
-#                     "warranty": "6 месяцев",
-#                     "categoryId": "apple-iphone"
-#                 }
-#             ]
-#         }
-#     ]
-#
-#
-
-
-
-
-
-
-
-
 if __name__ == "__main__":
     import uvicorn
     import os
 
-    port = int(os.environ.get("PORT", 8000))  # Render задаёт $PORT автоматически
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run("app.main:app", host="0.0.0.0", port=port)

@@ -6,11 +6,12 @@ from app import schemas, models
 from app.database import get_db
 
 from sqlalchemy.orm import joinedload
-
+from collections import defaultdict
 from app.models import Category
-from app.schemas import MenuItem, SubItem
+from app.schemas import MenuItem, SubItem, ProductOut
 
 router = APIRouter()
+
 
 @router.get("/categories", response_model=List[schemas.CategoryOut])
 def list_categories(with_products: bool = False, db: Session = Depends(get_db)):
@@ -18,6 +19,8 @@ def list_categories(with_products: bool = False, db: Session = Depends(get_db)):
     if with_products:
         return db.query(models.Category).options(joinedload(models.Category.products)).all()
     return db.query(models.Category).all()
+
+
 
 @router.post("/categories", response_model=schemas.CategoryOut, status_code=status.HTTP_201_CREATED)
 def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_db)):
@@ -27,6 +30,8 @@ def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_d
     db.commit()
     db.refresh(cat)
     return cat
+
+
 
 @router.patch("/categories/{category_id}", response_model=schemas.CategoryOut)
 def update_category(category_id: str, payload: schemas.CategoryUpdate, db: Session = Depends(get_db)):
@@ -41,30 +46,67 @@ def update_category(category_id: str, payload: schemas.CategoryUpdate, db: Sessi
     return cat
 
 
+# @router.get("/menu", response_model=List[MenuItem])
+# def get_menu(db: Session = Depends(get_db)):
+#     categories: List[Category] = db.query(Category).all()
+#
+#     menu_dict: Dict[str, List[Category]] = {}
+#     for cat in categories:
+#         if not cat.brand:
+#             continue
+#         if cat.brand not in menu_dict:
+#             menu_dict[cat.brand] = []
+#         menu_dict[cat.brand].append(cat)
+#
+#     menu: List[MenuItem] = []
+#     for brand, cats in menu_dict.items():
+#         sub_items = [
+#             SubItem(
+#                 id=cat.id,
+#                 title=cat.name,
+#                 slug=cat.id.split("-")[-1],
+#                 image=cat.image,
+#                 categoryId=cat.id,
+#             )
+#             for cat in cats
+#         ]
+#         menu.append(MenuItem(title=brand, slug=brand.lower(), subItems=sub_items))
+#
+#     return menu
+
+
+
+
 @router.get("/menu", response_model=List[MenuItem])
 def get_menu(db: Session = Depends(get_db)):
-    categories: List[Category] = db.query(Category).all()
+    categories = db.query(models.Category).options(joinedload(models.Category.products)).all()
 
-    menu_dict: Dict[str, List[Category]] = {}
+    grouped = defaultdict(list)
+
     for cat in categories:
-        if not cat.brand:
-            continue
-        if cat.brand not in menu_dict:
-            menu_dict[cat.brand] = []
-        menu_dict[cat.brand].append(cat)
-
-    menu: List[MenuItem] = []
-    for brand, cats in menu_dict.items():
-        sub_items = [
-            SubItem(
-                id=cat.id,
-                title=cat.name,
-                slug=cat.id.split("-")[-1],
-                image=cat.image,
-                categoryId=cat.id,
-            )
-            for cat in cats
+        products = [
+            ProductOut.from_orm(p) for p in cat.products
         ]
-        menu.append(MenuItem(title=brand, slug=brand.lower(), subItems=sub_items))
+        product = cat.products[0] if cat.products else None
 
-    return menu
+        image = f"/images/{product.image}" if product and product.image else ""
+        sub_item = SubItem(
+            id=cat.id,
+            title=cat.name,
+            slug=cat.id.split("-")[-1],
+            image=f"/images/{product.image}" if product and product.image else "",
+            categoryId=cat.id,
+            products=products
+        )
+        grouped[cat.brand or "Без бренда"].append(sub_item)
+
+    menu = [
+        MenuItem(
+            title=brand,
+            slug=brand.lower().replace(" ", "-"),
+            subitems=sorted(sub_items, key=lambda s: s.title) if sub_items else []
+        )
+        for brand, sub_items in grouped.items()
+    ]
+
+    return sorted(menu, key=lambda m: m.title)

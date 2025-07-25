@@ -159,7 +159,7 @@ class Category(Base):
     name = Column(String, unique=True, index=True)
     brand = Column(String, nullable=True)
 
-    # products = relationship("Product", back_populates="category")
+    products = relationship("Product", back_populates="category")
 
 
 class Application(Base):
@@ -184,6 +184,7 @@ class Product(Base):
     __tablename__ = "products"
     id = Column(String, primary_key=True, nullable=False)
     # name = Column(String, primary_key=True, nullable=True)
+
     category_id = Column(String, ForeignKey("categories.id"))
     title = Column(String, index=True)
     # link = Column(String, index=True)
@@ -192,6 +193,7 @@ class Product(Base):
     image = Column(String)
     slug = Column(String, index=True)
 
+    category = relationship("Category", back_populates="products")
     repair_services = relationship("RepairService", back_populates="product", lazy="joined")
     prices = relationship("ProductPrice", back_populates="product", passive_deletes=True)
 

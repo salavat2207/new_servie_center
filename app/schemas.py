@@ -262,7 +262,7 @@ class ProductOut(BaseModel):
     # link: Optional[str]
     category_id: Optional[int]
     description: Optional[str]
-    image: Optional[str]
+    image: Optional[str] = None
     city_id: Optional[int]
     price: Optional[int]
     duration: Optional[str]
@@ -395,14 +395,15 @@ class SubItem(BaseModel):
     id: str
     title: str
     slug: str
-    image: str
+    image: Optional[str] = ""
     categoryId: str
+    products: List[ProductOut] = []
 
 
 class MenuItem(BaseModel):
     title: str
     slug: str
-    subitems: List[SubItems]
+    subitems: Optional[List[SubItem]] = []
 
     class Config:
         orm_mode = True

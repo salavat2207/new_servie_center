@@ -33,7 +33,7 @@ from app.auth import (
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
-UPLOAD_DIR = "images"
+UPLOAD_DIR = "/app/images"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="admin/login")
 
 
@@ -207,37 +207,37 @@ def update_product(product_id: str, payload: schemas.ProductUpdate, db: Session 
 
 
 
-
-@router.get("/services", response_model=List[schemas.ServiceOut])
-def list_services(db: Session = Depends(get_db)):
-    """Получить список услуг"""
-    services = db.query(models.RepairService).options(
-        joinedload(models.RepairService.prices),
-        joinedload(models.RepairService.product)
-    ).all()
-
-    response = []
-
-    for s in services:
-        prices_by_city = {price.city_code: price.price for price in s.prices}
-
-        full_price = {
-            'CHE': prices_by_city.get('CHE', 0),
-            'MGN': prices_by_city.get('MGN', 0),
-            'EKB': prices_by_city.get('EKB', 0),
-        }
-
-        response.append(schemas.ServiceOut(
-            # id=s.id,
-            service_id=s.service_id,
-            title=s.title,
-            description=s.description,
-            duration=s.duration,
-            warranty=s.warranty,
-            price=full_price
-        ))
-
-    return response
+# Рабочий но не нужный вариант
+# @router.get("/services", response_model=List[schemas.ServiceOut])
+# def list_services(db: Session = Depends(get_db)):
+#     """Получить список услуг"""
+#     services = db.query(models.RepairService).options(
+#         joinedload(models.RepairService.prices),
+#         joinedload(models.RepairService.product)
+#     ).all()
+#
+#     response = []
+#
+#     for s in services:
+#         prices_by_city = {price.city_code: price.price for price in s.prices}
+#
+#         full_price = {
+#             'CHE': prices_by_city.get('CHE', 0),
+#             'MGN': prices_by_city.get('MGN', 0),
+#             'EKB': prices_by_city.get('EKB', 0),
+#         }
+#
+#         response.append(schemas.ServiceOut(
+#             # id=s.id,
+#             service_id=s.service_id,
+#             title=s.title,
+#             description=s.description,
+#             duration=s.duration,
+#             warranty=s.warranty,
+#             price=full_price
+#         ))
+#
+#     return response
 
 
 
@@ -256,7 +256,7 @@ def create_service(service_data: schemas.RepairServiceCreate, db: Session = Depe
     db.commit()
     db.refresh(service)
 
-    # Привязка цен
+
     for city_code, price in service_data.price.items():
         sp = models.RepairPrice(
             repair_id=service.id,
@@ -269,7 +269,7 @@ def create_service(service_data: schemas.RepairServiceCreate, db: Session = Depe
 
     # Собрать словарь цен для возврата
     prices_by_city = {code: 0 for code in ['CHE', 'MGN', 'EKB']}
-    for sp in service.prices:  # благодаря relationship
+    for sp in service.prices:
         prices_by_city[sp.city_code] = sp.price
 
     return schemas.ServiceOut(
@@ -504,12 +504,12 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
 #     return service
 
 # Categories
-@router.get("/categories", response_model=List[schemas.CategoryOut])
-def list_categories(with_products: bool = False, db: Session = Depends(get_db)):
-    """Получить список категорий"""
-    if with_products:
-        return db.query(models.Category).options(joinedload(models.Category.products)).all()
-    return db.query(models.Category).all()
+# @router.get("/categories", response_model=List[schemas.CategoryOut])
+# def list_categories(with_products: bool = False, db: Session = Depends(get_db)):
+#     """Получить список категорий"""
+#     if with_products:
+#         return db.query(models.Category).options(joinedload(models.Category.products)).all()
+#     return db.query(models.Category).all()
 
 @router.post("/categories", response_model=schemas.CategoryOut, status_code=status.HTTP_201_CREATED)
 def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_db)):
@@ -569,13 +569,13 @@ def update_category_image(
     if not category:
         raise HTTPException(status_code=404, detail="Категория не найдена")
 
-    filename = f"category_{category_id}_{file.filename}"
-    file_path = os.path.join("opt/images", filename)
+    filename = file.filename
+    file_path = os.path.join("images", filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    category.image = f"/opt/images/{filename}"
+    category.image = f"/images/{filename}"
     db.commit()
     db.refresh(category)
 
@@ -617,13 +617,13 @@ def update_product_image(
     if not product:
         raise HTTPException(status_code=404, detail="Продукт не найден")
 
-    filename = f"product_{product_id}_{file.filename}"
-    file_path = os.path.join("opt/images", filename)
+    filename = file.filename
+    file_path = os.path.join("images", filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    product.image = f"/opt/images/{filename}"
+    product.image = f"/images/{filename}"
     db.commit()
     db.refresh(product)
 
