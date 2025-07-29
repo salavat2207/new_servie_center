@@ -58,7 +58,7 @@ class RepairService(Base):
     description = Column(Text)
     duration = Column(String)
     warranty = Column(String)
-    # price = Column(Integer, nullable=True)
+    # price = Column(Integer, nullable=False)
 
     product_id = Column(String, ForeignKey("products.id"))
 
@@ -134,17 +134,18 @@ class Admin(Base):
     __tablename__ = 'admin'
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    password = Column(String(128), nullable=False)
+    hashed_password = Column(String(128), nullable=False)
     is_superadmin = Column(Boolean, default=True)
+    role = Column(String, default='admin')
 
 
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
-    password = Column(String(128), nullable=False)
+    hashed_password = Column(String(128), nullable=False)
     is_superadmin = Column(Boolean, default=False)
-    city_id = Column(Integer, ForeignKey("cities.id"))
+
 
 
 

@@ -86,6 +86,12 @@ class ServiceOut(BaseModel):
     warranty: Optional[str]
     # product_id: Optional[str]
     price: PriceDict
+    image: Optional[str] = None
+
+    @validator("image", pre=True, always=True, check_fields=False)
+    def add_prefix(cls, v):
+        return f"/images/{v}" if v else None
+
 
     class Config:
         orm_mode = True
@@ -136,6 +142,13 @@ class MasterCreate(BaseModel):
     name: str
     telegram_id: int
     city_id: int
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+
 
 
 class MasterOut(BaseModel):

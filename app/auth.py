@@ -7,9 +7,6 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, Admin
 
-"""
-🛡JWT-защита
-"""
 
 SECRET_KEY = "секретный_ключ"
 ALGORITHM = "HS256"
@@ -86,3 +83,9 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+
+
+
+

@@ -1,14 +1,24 @@
-from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+import logging
+
+from fastapi import Depends, HTTPException, APIRouter
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
+from fastapi.security import OAuth2PasswordRequestForm
 
 from passlib.context import CryptContext
 from requests import Session
 
-from app.auth import pwd_context
+from app import schemas
+from app.auth import pwd_context, authenticate_user
 from app.database import get_db
-from app.models import Admin
+
+from app.models import Admin, User
+from app.routers.admin import router
+from init_db import db
+
+
+router = APIRouter()
 
 
 SECRET_KEY = "your-secret-key"
@@ -36,8 +46,7 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def create_access_token(data: dict):
-    return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+
 
 def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
@@ -52,3 +61,5 @@ def get_current_admin(token: str = Depends(oauth2_scheme), db: Session = Depends
     if not admin:
         raise HTTPException(status_code=401, detail="Admin not found")
     return admin
+
+

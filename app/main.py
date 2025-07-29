@@ -4,8 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 
+# from app import auth
 from app.auth import authenticate_user, create_access_token
-from app.routers import cities, requests, masters, admin, products, menu
+from app.routers import cities, requests, masters, admin, products, menu, register
 from app.database import create_db_and_tables
 import logging
 from fastapi import FastAPI
@@ -67,6 +68,7 @@ app.include_router(requests.router, prefix="", tags=[""])
 app.include_router(products.router, prefix="/products", tags=["products"])
 # app.include_router(services.router, prefix="/services", tags=["services"])
 app.include_router(menu.router, prefix="/menu", tags=["menu"])
+app.include_router(register.router, prefix="/admin", tags=["auth"])
 app.mount("/images", StaticFiles(directory="images"), name="images")
 
 

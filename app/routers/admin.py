@@ -662,14 +662,18 @@ def delete_product_image(product_id: str, db: Session = Depends(get_db)):
 
 
 
-
+#
 # @router.post("/login")
 # def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 #     admin = db.query(Admin).filter_by(username=form_data.username).first()
-#     if not admin or not verify_password(form_data.password, admin.password):
+#     if not admin or not verify_password(form_data.password, admin.hashed_password):
 #         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
 #     token = create_access_token({"sub": admin.username})
 #     return {"access_token": token, "token_type": "bearer"}
-
-
-
+#
+#
+#
+# @router.get("/admin/me")
+# def get_me(admin = Depends(get_current_admin)):
+#     """Защита маршрутов через get_current_admin"""
+#     return {"username": admin.username, "role": admin.role}

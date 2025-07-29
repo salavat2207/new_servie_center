@@ -89,12 +89,12 @@ def get_menu(db: Session = Depends(get_db)):
         ]
         product = cat.products[0] if cat.products else None
 
-        image = f"/images/{product.image}" if product and product.image else ""
+        image = f"/images/{product.image.lstrip('/')}" if product and product.image else ""
         sub_item = SubItem(
             id=cat.id,
             title=cat.name,
-            slug=cat.id.split("-")[-1],
-            image=f"/images/{product.image}" if product and product.image else "",
+            slug=cat.id,
+            image=f"/images/{product.image.lstrip('/')}" if product and product.image else "",
             categoryId=cat.id,
             products=products
         )

@@ -48,7 +48,8 @@ async def submit_request(request: schemas.RepairRequestCreate,
 
 
 
-@router.post('/api/requests')
+
+@router.post('/requests')
 async def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
     if request.city_id not in city_cache:
         city = db.query(City).get(request.city_id)
@@ -79,12 +80,16 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
     db.commit()
     db.refresh(app)
 
+    city_code = city_cache[request.city_id].code
+    price_obj = next((p for p in service.prices if p.city_code == city_code), None)
+    price = f"{price_obj.price}" if price_obj else "Цена не указана"
+
     message = (
-        f"🛠 <b>Заявка на ремонт</b>\n"
+        f"🛠 <b>Заявка на ремонт: код города</b> {city_code}\n"
         f"📱 <b>Модель:</b> {product.title}\n"
         f"🔧 <b>Услуга:</b> {service.title}\n"
         f"📝 <b>Описание услуги:</b> {service.description}\n"
-        f"💵 <b>Цена:</b> {service.price} руб.\n"
+        f"💵 <b>Цена:</b> {price} руб.\n"
         f"🙍‍♂️ <b>Имя:</b> {app.name}\n"
         f"📞 <b>Телефон:</b> {app.phone}"
     )
@@ -95,6 +100,7 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
             await TelegramBotService.send_message(chat_id=master.telegram_id, text=message)
 
     return {"message": "Заявка успешно отправлена"}
+
 
 
 
