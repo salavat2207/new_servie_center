@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Optional, Annotated, List, TypedDict, Literal
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, validator, Field
 
-from typing import Dict, List, Literal
+from typing import List, Literal
 
 CityCode = Literal['CHE', 'MGN', 'EKB']
 
@@ -44,8 +44,6 @@ class RepairRequestBase(BaseModel):
     description: str
     city_id: int
 
-    # status: str
-    # created_at: datetime
 
     class Config:
         orm_mode = True
@@ -59,7 +57,6 @@ class RepairRequestUpdate(BaseModel):
 class ServiceCreate(BaseModel):
     id: str
     model: Optional[str] = None
-    # url: str
     title: str
     price: PriceDict
     description: str
@@ -78,13 +75,11 @@ class RepairPriceOut(BaseModel):
 
 
 class ServiceOut(BaseModel):
-    # id: int
     service_id: Optional[str] = None
     title: str
     description: Optional[str]
     duration: Optional[str]
     warranty: Optional[str]
-    # product_id: Optional[str]
     price: PriceDict
     image: Optional[str] = None
 
@@ -115,7 +110,6 @@ class RepairRequestOut(BaseModel):
         orm_mode = True
 
 
-# orm_mode = ConfigDict(from_attributes=True)
 
 
 class CityCreate(BaseModel):

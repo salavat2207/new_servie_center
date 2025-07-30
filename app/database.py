@@ -3,13 +3,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 
-# DATABASE_URL = 'sqlite:///./service_center.db'
 
-# Для деплоя на timeweb
-# DATABASE_URL = 'sqlite:////app/service_center.db'
+# Для деплоя
+DATABASE_URL = 'sqlite:////app/service_center.db'
 
-# Для локального тестирования
-DATABASE_URL = 'sqlite://///Users/salavatgibadullin/Documents/service_center/new_servie_center/service_center.db'
+
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine, autoflush=False)

@@ -4,8 +4,8 @@ from app import schemas, models
 from app.database import get_db
 from sqlalchemy.orm import Session, joinedload
 from typing import List
-from app.models import Product, RepairService
-from app.schemas import (ProductOut, ProductWithServicesResponse, RepairServiceResponse)
+from app.models import Product
+from app.schemas import ProductOut
 
 
 router = APIRouter(

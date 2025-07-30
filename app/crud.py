@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from app import models, schemas
-from app.models import RepairRequest, RepairService, City, Feedback
+from app.models import RepairRequest, RepairService, City
 from app.schemas import RepairRequestCreate, RepairRequestTelegram
 
 

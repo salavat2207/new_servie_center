@@ -4,10 +4,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 
-# from app import auth
 from app.auth import authenticate_user, create_access_token
 from app.routers import cities, requests, masters, admin, products, menu, register
-from app.database import create_db_and_tables
 import logging
 from fastapi import FastAPI
 
@@ -19,7 +17,6 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from routers.requests import router as requests_router
 
 from middleware.proxy_headers import ProxyHeadersMiddleware
 
@@ -48,40 +45,18 @@ app.add_middleware(
 
 
 
-"""
-Старт ТГ Бота
-"""
-# @app.on_event("startup")
-# def start_bot():
-#     threading.Thread(target=start_polling, daemon=True).start()
 
-
-
-"""
-Подключение роутеров
-"""
 app.include_router(cities.router)
-# app.include_router(feedback.router)
 app.include_router(masters.router)
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(requests.router, prefix="", tags=[""])
 app.include_router(products.router, prefix="/products", tags=["products"])
-# app.include_router(services.router, prefix="/services", tags=["services"])
 app.include_router(menu.router, prefix="/menu", tags=["menu"])
 app.include_router(register.router, prefix="/admin", tags=["auth"])
 app.mount("/images", StaticFiles(directory="images"), name="images")
 
 
 
-
-# @app.on_event('startup')
-# def startup_event():
-#     create_db_and_tables()
-
-
-"""
-Авторизация
-"""
 @app.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = authenticate_user(form_data.username, form_data.password)

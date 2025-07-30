@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, Query
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import Query
+from fastapi.security import OAuth2PasswordBearer
 
-from sqlalchemy.orm import Session, joinedload
 import shutil
 import os
 
 from uuid import uuid4
 
-from app.database import get_db
-from app.models import Admin, RepairService, City, Master, Application, Product
+from app.models import RepairService, City, Master, Application, Product
 
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile, Path
@@ -18,17 +16,10 @@ from app import schemas, models
 from app.database import get_db
 from app.routers.requests import city_cache
 from app.schemas import RepairRequestTelegram
-from app.utils import upload_image
-import uuid
+
 from sqlalchemy.orm import joinedload
 
 
-from fastapi.security import OAuth2PasswordRequestForm
-from app.auth import (
-    verify_password,
-    create_access_token,
-    get_current_admin
-)
 
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -88,23 +79,6 @@ def get_services(city_code: str = Query(...), db: Session = Depends(get_db)):
 
 
 
-#
-# @router.post("/admin/login")
-# def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-#     """
-#     Авторизация
-#     """
-#     admin = db.query(Admin).filter_by(username=form_data.username, is_superadmin=True).first()
-#     if not admin or not verify_password(form_data.password, admin.password):
-#         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
-#
-#     token = create_access_token({"sub": admin.username})
-#     return {"access_token": token, "token_type": "bearer"}
-
-
-
-
-
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 UPLOAD_DIR = "static/images"
@@ -151,16 +125,11 @@ def get_all_products_with_services(db: Session = Depends(get_db)):
 
 
 
-
-
 # Products
 @router.get("/products", response_model=List[schemas.ProductOut])
 def list_products(db: Session = Depends(get_db)):
     """Получить список продуктов"""
     return db.query(models.Product).all()
-
-
-
 
 
 @router.post("/products", response_model=schemas.ProductOut, status_code=status.HTTP_201_CREATED)
@@ -206,41 +175,6 @@ def update_product(product_id: str, payload: schemas.ProductUpdate, db: Session 
     return prod
 
 
-
-# Рабочий но не нужный вариант
-# @router.get("/services", response_model=List[schemas.ServiceOut])
-# def list_services(db: Session = Depends(get_db)):
-#     """Получить список услуг"""
-#     services = db.query(models.RepairService).options(
-#         joinedload(models.RepairService.prices),
-#         joinedload(models.RepairService.product)
-#     ).all()
-#
-#     response = []
-#
-#     for s in services:
-#         prices_by_city = {price.city_code: price.price for price in s.prices}
-#
-#         full_price = {
-#             'CHE': prices_by_city.get('CHE', 0),
-#             'MGN': prices_by_city.get('MGN', 0),
-#             'EKB': prices_by_city.get('EKB', 0),
-#         }
-#
-#         response.append(schemas.ServiceOut(
-#             # id=s.id,
-#             service_id=s.service_id,
-#             title=s.title,
-#             description=s.description,
-#             duration=s.duration,
-#             warranty=s.warranty,
-#             price=full_price
-#         ))
-#
-#     return response
-
-
-
 @router.post("/services", response_model=schemas.ServiceOut)
 def create_service(service_data: schemas.RepairServiceCreate, db: Session = Depends(get_db)):
     """Создание услуг"""
@@ -267,7 +201,6 @@ def create_service(service_data: schemas.RepairServiceCreate, db: Session = Depe
 
     db.commit()
 
-    # Собрать словарь цен для возврата
     prices_by_city = {code: 0 for code in ['CHE', 'MGN', 'EKB']}
     for sp in service.prices:
         prices_by_city[sp.city_code] = sp.price
@@ -280,10 +213,6 @@ def create_service(service_data: schemas.RepairServiceCreate, db: Session = Depe
         warranty=service.warranty,
         price=prices_by_city
     )
-
-
-
-
 
 
 @router.patch("/services/{service_id}/description", response_model=schemas.ServiceOut)
@@ -382,8 +311,6 @@ def update_service_price(
     db: Session = Depends(get_db)
 ):
     """Изменение цены на услугу для конкретного продукта и города"""
-
-    # ✅ Ищем услугу по связке service_id + product_id
     service = db.query(models.RepairService)\
         .options(joinedload(models.RepairService.prices))\
         .filter(
@@ -394,7 +321,6 @@ def update_service_price(
     if not service:
         raise HTTPException(status_code=404, detail="Service not found")
 
-    # ✅ Найти или создать цену по городу
     price_record = next((p for p in service.prices if p.city_code == city_code), None)
 
     if price_record:
@@ -411,7 +337,6 @@ def update_service_price(
     db.commit()
     db.refresh(service)
 
-    # Сбор цен по городам
     prices_by_city = {code: 0 for code in ['CHE', 'MGN', 'EKB']}
     for p in service.prices:
         prices_by_city[p.city_code] = p.price
@@ -428,9 +353,6 @@ def update_service_price(
 
 
 
-
-
-
 @router.post('/')
 async def send_repair_request(request: RepairRequestTelegram, db: Session = Depends(get_db)):
     if request.city_id not in city_cache:
@@ -440,10 +362,8 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
         else:
             raise HTTPException(status_code=404, detail="Город не найден")
 
-    # Найти продукт
     product = db.query(Product).filter(Product.id == request.product_id).first()
 
-    # ✅ Найти услугу по product_id и строковому service_id
     service = db.query(RepairService).filter(
         RepairService.product_id == request.product_id,
         RepairService.service_id == request.service_id  # <-- исправлено!
@@ -452,7 +372,6 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
     if not product or not service:
         raise HTTPException(status_code=404, detail="Продукт или услуга не найдены")
 
-    # Создать заявку
     app = Application(
         phone=request.phone,
         description=request.description,
@@ -465,7 +384,6 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
     db.commit()
     db.refresh(app)
 
-    # Подготовить сообщение
     message = (
         f"🛠 <b>Заявка на ремонт</b>\n"
         f"📱 <b>Модель:</b> {product.title}\n"
@@ -485,31 +403,6 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
 
 
 
-
-#
-# @router.patch("/services/{service_id}/price", response_model=schemas.ServiceOut)
-# def update_service_price(service_id: str, city_code: str, new_price: int, db: Session = Depends(get_db)):
-#     """Изменение цен"""
-#     sp = db.query(models.ServicePrice).filter_by(service_id=service_id, city_code=city_code).first()
-#     if not sp:
-#         raise HTTPException(status_code=404, detail="Service price record not found")
-#     sp.price = new_price
-#     db.commit()
-#     db.refresh(sp)
-#
-#     service = db.query(models.RepairService).filter_by(id=service_id).first()
-#     if not service:
-#         raise HTTPException(status_code=404, detail="Service not found")
-#
-#     return service
-
-# Categories
-# @router.get("/categories", response_model=List[schemas.CategoryOut])
-# def list_categories(with_products: bool = False, db: Session = Depends(get_db)):
-#     """Получить список категорий"""
-#     if with_products:
-#         return db.query(models.Category).options(joinedload(models.Category.products)).all()
-#     return db.query(models.Category).all()
 
 @router.post("/categories", response_model=schemas.CategoryOut, status_code=status.HTTP_201_CREATED)
 def create_category(payload: schemas.CategoryCreate, db: Session = Depends(get_db)):
@@ -542,18 +435,6 @@ def delete_category(category_id: str, db: Session = Depends(get_db)):
     db.commit()
 
 
-# @router.post("/upload-image")
-# def upload_image(file: UploadFile = File(...)):
-#     ext = file.filename.split(".")[-1]
-#     filename = f"{uuid4()}.{ext}"
-#     path = os.path.join(UPLOAD_DIR, filename)
-#
-#     os.makedirs(UPLOAD_DIR, exist_ok=True)
-#     with open(path, "wb") as buffer:
-#         shutil.copyfileobj(file.file, buffer)
-#
-#     return {"url": f"/{path}"}
-
 
 
 @router.put("/categories/{category_id}/image")
@@ -563,8 +444,6 @@ def update_category_image(
     db: Session = Depends(get_db)
 ):
     """Загрузка изображений для категорий"""
-    print("📦 Все категории:", [c.id for c in db.query(models.Category).all()])
-    print("🔍 Пришёл category_id:", category_id)
     category = db.query(models.Category).filter_by(id=category_id).first()
     if not category:
         raise HTTPException(status_code=404, detail="Категория не найдена")
@@ -591,13 +470,11 @@ def delete_category_image(category_id: str, db: Session = Depends(get_db)):
     if not category:
         raise HTTPException(status_code=404, detail="Категория не найдена")
 
-    # Удаляем файл, если он есть
     if category.image:
         image_path = category.image.lstrip("/")
         if os.path.exists(image_path):
             os.remove(image_path)
 
-    # Очищаем поле image
     category.image = None
     db.commit()
     db.refresh(category)
@@ -631,10 +508,6 @@ def update_product_image(
 
 
 
-
-
-
-
 @router.delete("/products/{product_id}/image")
 def delete_product_image(product_id: str, db: Session = Depends(get_db)):
     """Удаление изображения продукта"""
@@ -643,7 +516,7 @@ def delete_product_image(product_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Продукт не найден")
 
     if product.image:
-        image_path = product.image.lstrip("/")  # убираем / в начале пути
+        image_path = product.image.lstrip("/")
         if os.path.exists(image_path):
             os.remove(image_path)
 
@@ -652,28 +525,3 @@ def delete_product_image(product_id: str, db: Session = Depends(get_db)):
     db.refresh(product)
 
     return {"message": "Изображение удалено"}
-
-
-
-
-
-
-
-
-
-
-#
-# @router.post("/login")
-# def login_admin(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-#     admin = db.query(Admin).filter_by(username=form_data.username).first()
-#     if not admin or not verify_password(form_data.password, admin.hashed_password):
-#         raise HTTPException(status_code=401, detail="Неверный логин или пароль")
-#     token = create_access_token({"sub": admin.username})
-#     return {"access_token": token, "token_type": "bearer"}
-#
-#
-#
-# @router.get("/admin/me")
-# def get_me(admin = Depends(get_current_admin)):
-#     """Защита маршрутов через get_current_admin"""
-#     return {"username": admin.username, "role": admin.role}

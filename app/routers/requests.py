@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app import crud, schemas
-from app.models import Application, City, Product, RepairService, User, Master
+from app.models import Application, City, Product, RepairService, Master
 from app.schemas import RepairRequestTelegram
 from app.telegram_bot import notify_city_masters, TelegramBotService
 
@@ -85,7 +85,7 @@ async def send_repair_request(request: RepairRequestTelegram, db: Session = Depe
     price = f"{price_obj.price}" if price_obj else "Цена не указана"
 
     message = (
-        f"🛠 <b>Заявка на ремонт: код города</b> {city_code}\n"
+        f"🛠 <b>Заявка на ремонт. Код города:</b> {city_code}\n"
         f"📱 <b>Модель:</b> {product.title}\n"
         f"🔧 <b>Услуга:</b> {service.title}\n"
         f"📝 <b>Описание услуги:</b> {service.description}\n"

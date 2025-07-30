@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 from fastapi import Depends, HTTPException, status, APIRouter
 from sqlalchemy.orm import Session
 
@@ -7,7 +7,6 @@ from app.database import get_db
 
 from sqlalchemy.orm import joinedload
 from collections import defaultdict
-from app.models import Category
 from app.schemas import MenuItem, SubItem, ProductOut
 
 router = APIRouter()
@@ -45,34 +44,6 @@ def update_category(category_id: str, payload: schemas.CategoryUpdate, db: Sessi
     db.refresh(cat)
     return cat
 
-
-# @router.get("/menu", response_model=List[MenuItem])
-# def get_menu(db: Session = Depends(get_db)):
-#     categories: List[Category] = db.query(Category).all()
-#
-#     menu_dict: Dict[str, List[Category]] = {}
-#     for cat in categories:
-#         if not cat.brand:
-#             continue
-#         if cat.brand not in menu_dict:
-#             menu_dict[cat.brand] = []
-#         menu_dict[cat.brand].append(cat)
-#
-#     menu: List[MenuItem] = []
-#     for brand, cats in menu_dict.items():
-#         sub_items = [
-#             SubItem(
-#                 id=cat.id,
-#                 title=cat.name,
-#                 slug=cat.id.split("-")[-1],
-#                 image=cat.image,
-#                 categoryId=cat.id,
-#             )
-#             for cat in cats
-#         ]
-#         menu.append(MenuItem(title=brand, slug=brand.lower(), subItems=sub_items))
-#
-#     return menu
 
 
 

@@ -4,11 +4,8 @@ from app.database import Base
 from sqlalchemy import DateTime
 from datetime import datetime
 from sqlalchemy.dialects.postgresql import JSON
-from uuid import uuid4
 
-"""
-Город сервисного центра
-"""
+
 
 
 class City(Base):
@@ -26,9 +23,6 @@ class City(Base):
     masters = relationship("Master", back_populates="city")
     code = Column(String(3))
 
-"""
-Запрос на ремонт
-"""
 
 
 class RepairRequest(Base):
@@ -45,7 +39,6 @@ class RepairRequest(Base):
 
     city = relationship("City", back_populates="requests")
 
-    # product = relationship("Product", back_populates="requests")
 
 
 
@@ -58,13 +51,11 @@ class RepairService(Base):
     description = Column(Text)
     duration = Column(String)
     warranty = Column(String)
-    # price = Column(Integer, nullable=False)
 
     product_id = Column(String, ForeignKey("products.id"))
 
     product = relationship("Product", back_populates="repair_services")
     prices = relationship("RepairPrice", back_populates="repair_service", cascade="all, delete-orphan", lazy="joined")
-    # repair_prices = relationship("RepairPrice", back_populates="repair_service")
 
 
 
@@ -77,12 +68,7 @@ class RepairPrice(Base):
     city_code = Column(String, nullable=False)
     price = Column(Integer, nullable=False)
 
-    # repair_service = relationship("RepairService", back_populates="repair_prices")
     repair_service = relationship("RepairService", back_populates="prices")
-
-
-
-
 
 
 
@@ -150,9 +136,6 @@ class User(Base):
 
 
 
-
-
-
 class Category(Base):
     __tablename__ = 'categories'
     id = Column(String, primary_key=True)
@@ -176,7 +159,6 @@ class Application(Base):
     assigned_master = relationship("User", foreign_keys=[assigned_master_id])
 
     code = Column(String, unique=True, index=True)
-
     city = relationship("City")
 
 
@@ -184,12 +166,9 @@ class Application(Base):
 class Product(Base):
     __tablename__ = "products"
     id = Column(String, primary_key=True, nullable=False)
-    # name = Column(String, primary_key=True, nullable=True)
 
     category_id = Column(String, ForeignKey("categories.id"))
     title = Column(String, index=True)
-    # link = Column(String, index=True)
-    # product_id = Column(String, ForeignKey("products.id"))
     description = Column(String, nullable=True)
     image = Column(String)
     slug = Column(String, index=True)
@@ -201,11 +180,6 @@ class Product(Base):
 
 
 
-
-
-"""
-Модель ProductPrice, которая будет связывать Product и City с конкретной ценой
-"""
 
 
 class ProductPrice(Base):
